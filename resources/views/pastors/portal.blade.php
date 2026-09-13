@@ -19,13 +19,13 @@
 <body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
 
     <!-- Header Banner -->
-    <header class="bg-gradient-to-r from-blue-950 via-primary to-slate-900 text-white py-12 px-4 shadow-lg">
+    <header class="bg-gradient-to-r from-blue-950 via-primary to-slate-900 text-white py-10 px-4 shadow-lg">
         <div class="max-w-5xl mx-auto text-center">
             <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-white/10 backdrop-blur border-4 border-white/20 flex items-center justify-center text-3xl shadow-inner">
                 <i class="fas fa-user-tie text-amber-300"></i>
             </div>
             <h1 class="text-2xl sm:text-3xl font-black mb-1">{{ $pastor->name }}</h1>
-            <span class="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-secondary text-white inline-block mb-3 shadow">
+            <span class="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-secondary text-white inline-block mb-2 shadow">
                 {{ $pastor->pastorProfile->church_name ?? 'የወንጌል አገልግሎት' }}
             </span>
             <p class="text-xs sm:text-sm text-blue-100 max-w-lg mx-auto leading-relaxed">
@@ -36,15 +36,7 @@
 
     <main class="max-w-5xl mx-auto px-4 py-8 w-full flex-1">
         
-        <!-- Counseling Alert -->
-        @if(session('counseling_success'))
-            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 flex items-center space-x-3">
-                <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                <span class="text-xs sm:text-sm font-bold">{{ session('counseling_success') }}</span>
-            </div>
-        @endif
-
-        <!-- 🔴 ክፍል 1፡ የቀጥታ ስርጭት መመልከቻ ስክሪን (LIVE VIDEO SCREEN) -->
+        <!-- Live Video Screen -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -56,12 +48,8 @@
                 </span>
             </div>
 
-            <!-- Live Video Frame -->
             <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner">
-                <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
-
-                <!-- Waiting Screen when Pastor is not live yet -->
-                <div id="liveWaitingBox" class="text-center p-8">
+                <div class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
@@ -73,43 +61,103 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- 💬 ክፍል 2፡ ሚስጥራዊ የምክር ጥያቄ መላኪያ -->
-            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200">
-                <div class="flex items-center space-x-2 text-primary font-bold mb-1">
-                    <i class="fas fa-lock text-secondary"></i>
-                    <h3 class="text-lg">ለፓስተሩ ሚስጥራዊ ጥያቄ ይላኩ</h3>
-                </div>
-                <p class="text-xs text-gray-500 mb-6">መልእክትዎን ፓስተሩ በግል ተመልክተው ምላሽ ይሰጡዎታል</p>
+            <!-- 💬 ክፍል 1፡ ዘመናዊ የውይይት መስኮት (TWO-WAY CHAT BOX) -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[600px]">
+                
+                <!-- Chat Header -->
+                <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm">ከ {{ $pastor->name }} ጋር ውይይት</h4>
+                            <span class="text-[10px] text-emerald-400 flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+                                ሚስጥራዊ የሁለትዮሽ መስመር
+                            </span>
+                        </div>
+                    </div>
 
-                <form action="/pastors/{{ $pastor->id }}/counseling" method="POST" class="space-y-4">
+                    @if($believerName)
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-gray-300 font-medium">{{ $believerName }}</span>
+                            <a href="/p/{{ $pastor->email }}/logout" class="text-rose-400 hover:underline text-[11px]" title="ስም ቀይር">(ውጣ)</a>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Chat Messages Area (የጥያቄና መልስ መመልከቻ) -->
+                <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
+                    @if(count($chatMessages) > 0)
+                        @foreach($chatMessages as $msg)
+                            <!-- 1. የምዕመኑ ጥያቄ (Right Side - Green/Blue) -->
+                            <div class="flex flex-col items-end">
+                                <div class="bg-primary text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
+                                    {{ $msg->message }}
+                                </div>
+                                <span class="text-[9px] text-gray-400 mt-1">የእርስዎ ጥያቄ</span>
+                            </div>
+
+                            <!-- 2. የፓስተሩ መልስ (Left Side - White/Gold) -->
+                            @if($msg->reply)
+                                <div class="flex flex-col items-start">
+                                    <div class="bg-white border-2 border-secondary/30 p-3.5 rounded-2xl rounded-tl-none max-w-[85%] text-xs leading-relaxed shadow-sm text-gray-800">
+                                        <div class="flex items-center space-x-1 text-secondary font-bold mb-1 text-[11px]">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>የፓስተሩ መልስ፡</span>
+                                        </div>
+                                        {{ $msg->reply }}
+                                    </div>
+                                    <span class="text-[9px] text-secondary font-bold mt-1">ከአገልጋዩ የተሰጠ መልስ ✓</span>
+                                </div>
+                            @else
+                                <div class="flex items-center space-x-1.5 text-[10px] text-amber-600 bg-amber-50 px-3 py-1 rounded-full w-fit">
+                                    <i class="fas fa-clock animate-spin"></i>
+                                    <span>ፓስተሩ መልእክትዎን አይተው መልስ እየጻፉ ነው...</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    @else
+                        <div class="text-center py-16 text-gray-400">
+                            <i class="fas fa-comment-dots text-4xl mb-2 text-gray-300"></i>
+                            <p class="text-xs font-medium">የሚያስጨንቅዎትን ጥያቄ ወይም የምክር ፍላጎት ከስር ይጻፉ።</p>
+                            <p class="text-[10px] text-gray-400 mt-1">ፓስተሩ መልስ ሲሰጡዎት እዚህ ቦክስ ውስጥ ያዩታል!</p>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Chat Input Form -->
+                <form action="/p/{{ $pastor->email }}/send-chat" method="POST" class="p-4 bg-white border-t border-gray-200">
                     @csrf
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ስምዎ *</label>
-                        <input type="text" name="sender_name" required placeholder="ሙሉ ስምዎ" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    
+                    @if(!$believerName)
+                        <!-- ስም እና ስልክ ካልተመዘገበ ለመጀመሪያ ጊዜ ይጠይቃል -->
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <input type="text" name="sender_name" required placeholder="ሙሉ ስምዎ *" class="text-xs px-3 py-2 rounded-xl border border-gray-300 focus:border-primary outline-none">
+                            <input type="text" name="sender_phone" required placeholder="ስልክ ቁጥርዎ *" class="text-xs px-3 py-2 rounded-xl border border-gray-300 focus:border-primary outline-none">
+                        </div>
+                    @else
+                        <input type="hidden" name="sender_name" value="{{ $believerName }}">
+                        <input type="hidden" name="sender_phone" value="{{ $believerPhone }}">
+                    @endif
+
+                    <div class="flex items-center space-x-2">
+                        <input type="text" name="message" required placeholder="ጥያቄዎን ወይም ሸክምዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-4 py-3 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        <button type="submit" class="px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow transition flex items-center space-x-1">
+                            <span>ላክ</span>
+                            <i class="fas fa-paper-plane text-[10px]"></i>
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ስልክ ወይም ኢሜይል *</label>
-                        <input type="text" name="sender_phone_or_email" required placeholder="መልስ የሚቀበሉበት አድራሻ" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የጉዳዩ ርዕስ *</label>
-                        <input type="text" name="subject" required placeholder="ለምሳሌ፡ ስለ ትዳር፣ ስለ ፈውስ፣ ስለ ስራ..." class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ዝርዝር መልእክት *</label>
-                        <textarea name="message" rows="4" required placeholder="የምክር ጥያቄዎን ወይም ሸክምዎን እዚህ ያጋሩ..." class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-secondary hover:bg-amber-600 text-white font-bold rounded-xl shadow transition">
-                        መልእክቱን ላክ
-                    </button>
                 </form>
+
             </div>
 
-            <!-- 📖 ክፍል 3፡ የጽሁፍ ትምህርቶች፣ ጥናቶችና የሚዲያ ፋይሎች -->
+            <!-- 📖 ክፍል 2፡ የጽሁፍ ትምህርቶች፣ ጥናቶችና ሚዲያዎች -->
             <div class="space-y-4">
                 <h3 class="font-extrabold text-gray-900 text-base flex items-center space-x-2">
                     <i class="fas fa-book-open text-primary"></i>
-                    <span>የትምህርቶች፣ የጽሁፍ ጥናቶችና ሚዲያ ማዕከል</span>
+                    <span>የትምህርቶችና የጽሁፍ ጥናቶች ማዕከል</span>
                 </h3>
 
                 @forelse($pastor->teachings as $t)
@@ -124,7 +172,6 @@
 
                         <h4 class="font-bold text-gray-900 text-base mb-2">{{ $t->title }}</h4>
 
-                        <!-- የጽሁፍ ትምህርት ከሆነ ሙሉ ጽሁፉን እዚህ ማንበብ ይችላሉ -->
                         @if($t->type == 'article')
                             <div class="bg-slate-50 p-4 rounded-2xl text-xs text-gray-700 leading-relaxed whitespace-pre-line border border-gray-100">
                                 {{ $t->content }}
