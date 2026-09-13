@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የፓስተሩ ፖርታል ለምዕመናን (የታገደ ከሆነ ምዕመኑ ማየት አይችልም)
+// 1. የፓስተሩ ፖርታል (የምዕመን Dashboard መግቢያና ማሳያ)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -42,70 +42,163 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
         return view('pastors.suspended', compact('pastor'));
     }
 
-    $believerPhone = session('believer_phone');
-    $believerName = session('believer_name');
-    $chatMessages = [];
+    $believerPhone = session('believer_phone_' . $pastor->id);
+    $believerName = session('believer_name_' . $pastor->id);
 
-    if ($believerPhone) {
-        $chatMessages = DB::table('counseling_messages')
-            ->where('pastor_id', $pastor->id)
-            ->where('subject', 'like', "%{$believerPhone}%")
-            ->orderBy('created_at', 'asc')
-            ->get();
+    // ምዕመኑ ገና ካልገባ የመመዝገቢያ/መግቢያ ፎርም ያያል
+    if (!$believerPhone) {
+        return view('believers.login', compact('pastor'));
     }
 
-    return view('pastors.portal', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
+    // በስሙ የተላኩ የቻት መልእክቶች
+    $chatMessages = DB::table('counseling_messages')
+        ->where('pastor_id', $pastor->id)
+        ->where('subject', 'like', "%{$believerPhone}%")
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+    return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
 })->name('pastor.portal');
 
-Route::post('/p/{slug}/send-chat', function (Request $request, $slug) {
+// ምዕመኑ በስሙ መመዝገቢያ/መግቢያ (Believer Onboarding)
+Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
+    $request->validate([
+        'name' => 'required|string|max:100',
+        'phone' => 'required|string|max:50',
+    ]);
+
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
             $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
         })
         ->firstOrFail();
 
-    if (!$pastor->is_verified) {
-        return back()->with('error', 'አገልግሎቱ ለጊዜው ስለታገደ መልእክት መላክ አይቻልም።');
+    $name = trim($request->name);
+    $phone = trim($request->phone);
+
+    // ምዕመኑ በዳታቤዝ ውስጥ መኖሩን ማረጋገጥና መመዝገብ
+    $existing = DB::table('believers')
+        ->where('pastor_id', $pastor->id)
+        ->where('phone', $phone)
+        ->first();
+
+    if (!$existing) {
+        DB::table('believers')->insert([
+            'pastor_id' => $pastor->id,
+            'name' => $name,
+            'phone' => $phone,
+            'created_at' => now(),
+        ]);
     }
 
+    // Session መያዝ
     session([
-        'believer_name' => $request->sender_name,
-        'believer_phone' => $request->sender_phone,
+        'believer_name_' . $pastor->id => $name,
+        'believer_phone_' . $pastor->id => $phone,
     ]);
+
+    return redirect('/p/' . $slug);
+});
+
+// ምዕመኑ ከአካውንቱ መውጣት
+Route::get('/p/{slug}/believer-logout', function ($slug) {
+    $pastor = User::where('role', 'pastor')
+        ->where(function ($q) use ($slug) {
+            $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+        })
+        ->firstOrFail();
+
+    session()->forget(['believer_name_' . $pastor->id, 'believer_phone_' . $pastor->id]);
+    return redirect('/p/' . $slug);
+});
+
+// ምዕመኑ በቻት ቦክስ መልእክት መላኪያ (ቀጥታ ያለ ድጋሚ ስም/ስልክ)
+Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
+    $pastor = User::where('role', 'pastor')
+        ->where(function ($q) use ($slug) {
+            $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+        })
+        ->firstOrFail();
+
+    $believerPhone = session('believer_phone_' . $pastor->id);
+    $believerName = session('believer_name_' . $pastor->id);
+
+    if (!$believerPhone) {
+        return redirect('/p/' . $slug);
+    }
+
+    $request->validate(['message' => 'required|string']);
 
     DB::table('counseling_messages')->insert([
         'pastor_id' => $pastor->id,
         'user_id' => 1,
-        'subject' => '[' . $request->sender_phone . '] ከ ' . $request->sender_name,
+        'subject' => '[' . $believerPhone . '] ከ ' . $believerName,
         'message' => $request->message,
         'status' => 'pending',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    return back()->with('counseling_success', 'መልእክትዎ ተልኳል!');
+    return back();
 });
 
-Route::get('/p/{slug}/logout', function ($slug) {
-    session()->forget(['believer_name', 'believer_phone']);
-    return redirect('/p/' . $slug);
+// 2. ሱፐር አድሚን ዳሽቦርድ (የፓስተሮች እና የምዕመናን ፖፕ-አፕ ዝርዝር)
+Route::get('/super-admin', function () {
+    $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
+    
+    // ለእያንዳንዱ ፓስተር የምዕመናንን ብዛትና ዝርዝር ማያያዝ
+    foreach ($pastors as $p) {
+        $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
+        $p->believers_count = count($p->believers_list);
+    }
+
+    $totalBelievers = DB::table('believers')->count();
+    $teachingsCount = DB::table('teachings')->count();
+
+    return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount'));
+})->name('admin.dashboard');
+
+Route::post('/super-admin/generate-pastor', function (Request $request) {
+    $request->validate(['name' => 'required', 'church_name' => 'required', 'phone' => 'required', 'slug' => 'required|unique:users,email']);
+    $userId = DB::table('users')->insertGetId([
+        'name' => $request->name, 'email' => strtolower(trim($request->slug)), 'phone' => $request->phone, 'role' => 'pastor', 'password' => bcrypt('123456'), 'is_verified' => 1, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    DB::table('pastor_profiles')->insert([
+        'user_id' => $userId, 'church_name' => $request->church_name, 'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    return back()->with('success', 'ለአገልጋዩ ልዩ ሊንክ በተሳካ ሁኔታ ተፈጥሯል!');
 });
 
-// 2. የፓስተሩ ዳሽቦርድ (🔒 የታገደ ከሆነ ፓስተሩም መግባት አይችልም!)
+Route::post('/super-admin/toggle-status/{id}', function ($id) {
+    $pastor = User::findOrFail($id);
+    $pastor->is_verified = !$pastor->is_verified;
+    $pastor->save();
+    return back()->with('success', 'የአገልጋዩ ሁኔታ ተቀይሯል!');
+});
+
+Route::post('/super-admin/delete-pastor/{id}', function ($id) {
+    DB::table('pastor_profiles')->where('user_id', $id)->delete();
+    DB::table('teachings')->where('pastor_id', $id)->delete();
+    DB::table('counseling_messages')->where('pastor_id', $id)->delete();
+    DB::table('believers')->where('pastor_id', $id)->delete();
+    DB::table('users')->where('id', $id)->delete();
+    return back()->with('success', 'አገልጋዩ ተሰርዟል!');
+});
+
+// 3. የፓስተሩ ዳሽቦርድ
 Route::get('/pastor-desk/{id}', function ($id) {
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
-
-    // እገዳ ፍተሻ (Suspension Check for Pastor)
     if (!$pastor->is_verified) {
         return view('pastors.dashboard-locked', compact('pastor'));
     }
 
     $messages = DB::table('counseling_messages')->where('pastor_id', $id)->orderByDesc('created_at')->get();
     $teachings = Teaching::where('pastor_id', $id)->latest()->get();
-    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings'));
+    $believers = DB::table('believers')->where('pastor_id', $id)->orderByDesc('created_at')->get();
+
+    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers'));
 })->name('pastor.dashboard');
 
-// የታገደ ከሆነ አፕሎድ ማድረግ ወይም መመለስ አይችልም
 Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
     $pastor = User::findOrFail($id);
     if (!$pastor->is_verified) {
@@ -141,36 +234,17 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
 
-// 3. ሱፐር አድሚን ዳሽቦርድ
-Route::get('/super-admin', function () {
-    $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
-    $believersCount = DB::table('counseling_messages')->distinct('user_id')->count('user_id') + 45;
-    $teachingsCount = DB::table('teachings')->count();
-    return view('admin.dashboard', compact('pastors', 'believersCount', 'teachingsCount'));
-})->name('admin.dashboard');
+// አዲሱን believers ቴብል መፍጠሪያ (1 ጊዜ ብቻ የሚነካ)
+Route::get('/setup-believers-table', function () {
+    DB::statement("CREATE TABLE IF NOT EXISTS `believers` (
+      `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+      `pastor_id` bigint(20) UNSIGNED NOT NULL,
+      `name` varchar(255) NOT NULL,
+      `phone` varchar(100) NOT NULL,
+      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`),
+      FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-Route::post('/super-admin/generate-pastor', function (Request $request) {
-    $request->validate(['name' => 'required', 'church_name' => 'required', 'phone' => 'required', 'slug' => 'required|unique:users,email']);
-    $userId = DB::table('users')->insertGetId([
-        'name' => $request->name, 'email' => strtolower(trim($request->slug)), 'phone' => $request->phone, 'role' => 'pastor', 'password' => bcrypt('123456'), 'is_verified' => 1, 'created_at' => now(), 'updated_at' => now(),
-    ]);
-    DB::table('pastor_profiles')->insert([
-        'user_id' => $userId, 'church_name' => $request->church_name, 'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ', 'created_at' => now(), 'updated_at' => now(),
-    ]);
-    return back()->with('success', 'ለአገልጋዩ ልዩ ሊንክ በተሳካ ሁኔታ ተፈጥሯል!');
-});
-
-Route::post('/super-admin/toggle-status/{id}', function ($id) {
-    $pastor = User::findOrFail($id);
-    $pastor->is_verified = !$pastor->is_verified;
-    $pastor->save();
-    return back()->with('success', 'የአገልጋዩ ሁኔታ ተቀይሯል!');
-});
-
-Route::post('/super-admin/delete-pastor/{id}', function ($id) {
-    DB::table('pastor_profiles')->where('user_id', $id)->delete();
-    DB::table('teachings')->where('pastor_id', $id)->delete();
-    DB::table('counseling_messages')->where('pastor_id', $id)->delete();
-    DB::table('users')->where('id', $id)->delete();
-    return back()->with('success', 'አገልጋዩ ተሰርዟል!');
+    return "<h2 style='color:green;'>✅ Believers Table Created! <a href='/super-admin'>ወደ አድሚን ሂድ</a></h2>";
 });
