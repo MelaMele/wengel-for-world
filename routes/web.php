@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የፓስተሩ ሊንክ ለምዕመናን (ምዕመናን የሚገቡበት)
+// 1. የምዕመናን ፖርታል (ቻት መግቢያና ማሳያ)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -60,74 +60,52 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
 
 // ምዕመኑ በስሙ መመዝገቢያ
 Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
-    $request->validate([
-        'name' => 'required|string|max:100',
-        'phone' => 'required|string|max:50',
-    ]);
-
-    $pastor = User::where('role', 'pastor')
-        ->where(function ($q) use ($slug) {
-            $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
-        })
-        ->firstOrFail();
+    $request->validate(['name' => 'required|string|max:100', 'phone' => 'required|string|max:50']);
+    $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
+        $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+    })->firstOrFail();
 
     $name = trim($request->name);
     $phone = trim($request->phone);
 
-    $existing = DB::table('believers')
-        ->where('pastor_id', $pastor->id)
-        ->where('phone', $phone)
-        ->first();
-
+    $existing = DB::table('believers')->where('pastor_id', $pastor->id)->where('phone', $phone)->first();
     if (!$existing) {
-        DB::table('believers')->insert([
-            'pastor_id' => $pastor->id,
-            'name' => $name,
-            'phone' => $phone,
-            'created_at' => now(),
-        ]);
+        DB::table('believers')->insert(['pastor_id' => $pastor->id, 'name' => $name, 'phone' => $phone, 'created_at' => now()]);
     }
 
-    session([
-        'believer_name_' . $pastor->id => $name,
-        'believer_phone_' . $pastor->id => $phone,
-    ]);
-
+    session(['believer_name_' . $pastor->id => $name, 'believer_phone_' . $pastor->id => $phone]);
     return redirect('/p/' . $slug);
 });
 
 Route::get('/p/{slug}/believer-logout', function ($slug) {
-    $pastor = User::where('role', 'pastor')
-        ->where(function ($q) use ($slug) {
-            $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
-        })
-        ->firstOrFail();
-
+    $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
+        $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+    })->firstOrFail();
     session()->forget(['believer_name_' . $pastor->id, 'believer_phone_' . $pastor->id]);
     return redirect('/p/' . $slug);
 });
 
+// ምዕመኑ በጽሁፍ ወይም በድምፅ መልእክት መላኪያ (Voice + Text Message)
 Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
-    $pastor = User::where('role', 'pastor')
-        ->where(function ($q) use ($slug) {
-            $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
-        })
-        ->firstOrFail();
+    $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
+        $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+    })->firstOrFail();
 
     $believerPhone = session('believer_phone_' . $pastor->id);
     $believerName = session('believer_name_' . $pastor->id);
+    if (!$believerPhone) return redirect('/p/' . $slug);
 
-    if (!$believerPhone) {
-        return redirect('/p/' . $slug);
+    $messageContent = $request->message;
+    // የድምፅ ፋይል ከመጣ (Audio Voice Note Base64)
+    if ($request->filled('voice_data')) {
+        $messageContent = 'AUDIO_VOICE:' . $request->voice_data;
     }
-
-    $request->validate(['message' => 'required|string']);
 
     DB::table('counseling_messages')->insert([
         'pastor_id' => $pastor->id,
         'user_id' => 1,
         'subject' => '[' . $believerPhone . '] ከ ' . $believerName,
-        'message' => $request->message,
+        'message' => $messageContent,
         'status' => 'pending',
         'created_at' => now(),
         'updated_at' => now(),
@@ -136,50 +114,27 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
-// 2. ሱፐር አድሚን ዳሽቦርድ (ፓስተሮችን መመዝገብ፣ መቆጣጠርና የዳሽቦርድ ሊንካቸውን መስጠት ብቻ)
+// 2. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
-    
     foreach ($pastors as $p) {
         $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
         $p->believers_count = count($p->believers_list);
     }
-
     $totalBelievers = DB::table('believers')->count();
     $teachingsCount = DB::table('teachings')->count();
-
     return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount'));
 })->name('admin.dashboard');
 
-// አዲስ ፓስተር መዝግቦ የዳሽቦርድ ቁልፍ መስጠት
 Route::post('/super-admin/generate-pastor', function (Request $request) {
-    $request->validate([
-        'name' => 'required',
-        'church_name' => 'required',
-        'phone' => 'required',
-        'slug' => 'required|unique:users,email'
-    ]);
-
+    $request->validate(['name' => 'required', 'church_name' => 'required', 'phone' => 'required', 'slug' => 'required|unique:users,email']);
     $userId = DB::table('users')->insertGetId([
-        'name' => $request->name,
-        'email' => strtolower(trim($request->slug)),
-        'phone' => $request->phone,
-        'role' => 'pastor',
-        'password' => bcrypt('123456'),
-        'is_verified' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
+        'name' => $request->name, 'email' => strtolower(trim($request->slug)), 'phone' => $request->phone, 'role' => 'pastor', 'password' => bcrypt('123456'), 'is_verified' => 1, 'created_at' => now(), 'updated_at' => now(),
     ]);
-
     DB::table('pastor_profiles')->insert([
-        'user_id' => $userId,
-        'church_name' => $request->church_name,
-        'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ',
-        'created_at' => now(),
-        'updated_at' => now(),
+        'user_id' => $userId, 'church_name' => $request->church_name, 'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ', 'created_at' => now(), 'updated_at' => now(),
     ]);
-
-    return back()->with('success', 'አገልጋዩ በተሳካ ሁኔታ ተመዝግቧል! የዳሽቦርድ ሊንኩን ለፓስተሩ ይስጡ።');
+    return back()->with('success', 'አገልጋዩ ተመዝግቧል!');
 });
 
 Route::post('/super-admin/toggle-status/{id}', function ($id) {
@@ -198,7 +153,7 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
 });
 
-// 3. የፓስተሩ ዳሽቦርድ (የምዕመናኑን ሊንክ ፓስተሩ ራሱ እዚህ ያገኘዋል)
+// 3. የፓስተሩ ዳሽቦርድ (የድምፅና የጽሁፍ መልስ መስጫ)
 Route::get('/pastor-desk/{id}', function ($id) {
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
     if (!$pastor->is_verified) {
@@ -214,9 +169,7 @@ Route::get('/pastor-desk/{id}', function ($id) {
 
 Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
     $pastor = User::findOrFail($id);
-    if (!$pastor->is_verified) {
-        return back()->with('error', 'አካውንትዎ ስለታገደ ይዘት መጫን አይችሉም።');
-    }
+    if (!$pastor->is_verified) return back()->with('error', 'አካውንትዎ ታግዷል');
 
     $request->validate(['title' => 'required', 'content_type' => 'required|in:audio,video,article,live']);
     $mediaUrl = null;
@@ -235,25 +188,18 @@ Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id)
     return back()->with('success', 'ይዘቱ ተጭኗል!');
 });
 
+// ፓስተሩ በጽሁፍ ወይም በድምፅ መልስ መስጫ (Voice + Text Reply)
 Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     $pastor = User::findOrFail($id);
-    if (!$pastor->is_verified) {
-        return back()->with('error', 'አካውንትዎ ስለታገደ መልስ መስጠት አይችሉም።');
+    if (!$pastor->is_verified) return back()->with('error', 'አካውንትዎ ታግዷል');
+
+    $replyContent = $request->reply;
+    if ($request->filled('pastor_voice_data')) {
+        $replyContent = 'AUDIO_VOICE:' . $request->pastor_voice_data;
     }
 
     DB::table('counseling_messages')->where('id', $request->message_id)->where('pastor_id', $id)->update([
-        'reply' => $request->reply, 'status' => 'answered', 'updated_at' => now(),
+        'reply' => $replyContent, 'status' => 'answered', 'updated_at' => now(),
     ]);
     return back()->with('success', 'መልስዎ ተልኳል!');
-});
-
-// ማጽጃ
-Route::get('/clean-all-demo-data', function () {
-    DB::table('counseling_messages')->truncate();
-    DB::table('teachings')->truncate();
-    DB::table('pastor_profiles')->truncate();
-    DB::table('believers')->truncate();
-    DB::table('users')->where('role', 'pastor')->delete();
-
-    return "<h2 style='color:green;font-family:sans-serif;'>✅ ሁሉም ዳታዎች ተጠርገዋል! <br><br> <a href='/super-admin'>ወደ Super Admin ሂድ</a></h2>";
 });
