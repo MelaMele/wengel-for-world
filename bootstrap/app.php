@@ -17,15 +17,6 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })->create();
 
-// የ Storage እና Cache ቦታዎችን ወደ /tmp ማዞር
 $app->useStoragePath('/tmp/storage');
-$app->bootstrapWith([
-    \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
-    \Illuminate\Foundation\Bootstrap\LoadConfiguration::class,
-    \Illuminate\Foundation\Bootstrap\HandleExceptions::class,
-    \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
-    \Illuminate\Foundation\Bootstrap\RegisterProviders::class,
-    \Illuminate\Foundation\Bootstrap\BootProviders::class,
-]);
 
 return $app;
