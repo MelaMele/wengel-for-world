@@ -25,7 +25,7 @@
                 <div class="w-9 h-9 bg-secondary text-white rounded-lg flex items-center justify-center font-black text-lg">W</div>
                 <div>
                     <span class="font-extrabold tracking-wide text-white text-base">WENGEL <span class="text-secondary">SUPER ADMIN</span></span>
-                    <span class="text-[10px] block text-slate-400 font-medium">የኪራይና ሊንክ መቆጣጠሪያ ማዕከል</span>
+                    <span class="text-[10px] block text-slate-400 font-medium">የኪራይና ፓስተሮች አስተዳደር ማዕከል</span>
                 </div>
             </div>
             <a href="/" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
@@ -36,19 +36,19 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-        <!-- Top Metrics (እውነተኛ ቁጥሮች ብቻ) -->
+        <!-- Top Metrics -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between">
                     <div>
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">የፓስተሮች ብዛት</span>
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">የተመዘገቡ ፓስተሮች</span>
                         <h3 class="text-3xl font-black text-primary mt-1">{{ count($pastors) }}</h3>
                     </div>
                     <div class="w-12 h-12 bg-blue-50 text-primary rounded-xl flex items-center justify-center text-xl">
                         <i class="fas fa-user-tie"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-3">የተመዘገቡ አገልጋዮች</p>
+                <p class="text-xs text-gray-500 mt-3">የተከራዩ አገልጋዮች</p>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -87,11 +87,11 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Link Generator Form -->
+            <!-- Pastor Registration Form -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
-                    <h3 class="text-base font-black text-primary mb-1">ለአዲስ ፓስተር ሊንክ ማመንጫ</h3>
-                    <p class="text-xs text-gray-500 mb-6">የፓስተሩን መረጃ አስገብተው በስማቸው ልዩ ሊንክ ይፍጠሩ።</p>
+                    <h3 class="text-base font-black text-primary mb-1">አዲስ ፓስተር መመዝገቢያ</h3>
+                    <p class="text-xs text-gray-500 mb-6">ፓስተሩን መዝግበው የራሳቸውን ዳሽቦርድ መክፈቻ ሊንክ ይስጧቸው።</p>
 
                     <form action="/super-admin/generate-pastor" method="POST" class="space-y-4">
                         @csrf
@@ -111,15 +111,12 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ልዩ የሊንክ መለያ (Slug) *</label>
-                            <div class="flex items-center">
-                                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-2.5 rounded-l-xl border border-r-0 border-gray-300">/p/</span>
-                                <input type="text" name="slug" required placeholder="yosef" class="w-full text-sm px-3.5 py-2.5 rounded-r-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none lowercase">
-                            </div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ልዩ መለያ (Slug) *</label>
+                            <input type="text" name="slug" required placeholder="yosef" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none lowercase">
                         </div>
 
                         <button type="submit" class="w-full py-3 bg-secondary hover:bg-amber-600 text-white font-bold rounded-xl shadow transition">
-                            ሊንኩን ጀነሬት አድርግ
+                            ፓስተሩን መዝግብና ዳሽቦርድ ስጥ
                         </button>
                     </form>
                 </div>
@@ -142,37 +139,40 @@
                                 </div>
                             </div>
                             
-                            <!-- 🌟 Pop-up Button -->
+                            <!-- 🌟 Pop-up Button: በፓስተሩ ስር ያሉ ምዕመናን -->
                             <button type="button" onclick="showModal('{{ $p->id }}')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-secondary border border-amber-200 transition flex items-center space-x-2">
                                 <i class="fas fa-users"></i>
                                 <span>{{ $p->believers_count }} ምዕመናን (ዝርዝር እይ)</span>
                             </button>
                         </div>
 
-                        <!-- Link Info -->
-                        <div class="bg-slate-50 p-3 rounded-xl border border-gray-100 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                            <span class="text-gray-500 font-bold">የምዕመናን ሊንክ:</span>
+                        <!-- ለፓስተሩ የሚሰጠው የዳሽቦርድ መግቢያ ሊንክ -->
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-gray-100 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <span class="text-gray-600 font-bold flex items-center space-x-1">
+                                <i class="fas fa-key text-secondary"></i>
+                                <span>ለፓስተሩ የሚሰጥ የዳሽቦርድ ሊንክ:</span>
+                            </span>
                             <div class="flex items-center space-x-2">
                                 <code class="bg-white px-2.5 py-1 rounded border border-gray-200 text-primary font-mono font-bold">
-                                    https://wengel-for-world.vercel.app/p/{{ $p->email }}
+                                    https://wengel-for-world.vercel.app/pastor-desk/{{ $p->id }}
                                 </code>
-                                <a href="/p/{{ $p->email }}" target="_blank" class="text-primary hover:underline">
-                                    <i class="fas fa-external-link-alt"></i>
+                                <a href="/pastor-desk/{{ $p->id }}" target="_blank" class="text-secondary font-bold hover:underline">
+                                    ክፈት
                                 </a>
                             </div>
                         </div>
 
                         <!-- Actions -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
-                            <a href="/pastor-desk/{{ $p->id }}" target="_blank" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-primary font-bold rounded-lg transition">
-                                <i class="fas fa-desktop mr-1"></i> የፓስተሩን ዳሽቦርድ እይ
-                            </a>
+                            <span class="text-xs font-bold {{ $p->is_verified ? 'text-emerald-600' : 'text-rose-600' }}">
+                                ● {{ $p->is_verified ? 'ኪራይ: ገቢር (Active)' : 'ኪራይ: የታገደ (Suspended)' }}
+                            </span>
 
                             <div class="flex items-center space-x-2">
                                 <form action="/super-admin/toggle-status/{{ $p->id }}" method="POST">
                                     @csrf
                                     <button type="submit" class="px-3 py-1.5 font-bold rounded-lg transition {{ $p->is_verified ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
-                                        {{ $p->is_verified ? 'ሊንኩን እገድ' : 'ሊንኩን አድስ' }}
+                                        {{ $p->is_verified ? 'ፓስተሩን እገድ' : 'ፓስተሩን አድስ' }}
                                     </button>
                                 </form>
 
@@ -185,12 +185,12 @@
                             </div>
                         </div>
 
-                        <!-- 🌟 Pop-up Modal ለእያንዳንዱ ፓስተር -->
+                        <!-- 🌟 Pop-up Modal -->
                         <dialog id="modal-{{ $p->id }}" class="rounded-3xl p-0 w-full max-w-lg shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
                             <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
                                 <div>
-                                    <h4 class="font-bold text-base">በ {{ $p->name }} ስር ያሉ ምዕመናን</h4>
-                                    <span class="text-xs text-amber-400">{{ $p->believers_count }} የተመዘገቡ ምዕመናን</span>
+                                    <h4 class="font-bold text-base">በ {{ $p->name }} ስር የተመዘገቡ ምዕመናን</h4>
+                                    <span class="text-xs text-amber-400">{{ $p->believers_count }} ምዕመናን</span>
                                 </div>
                                 <button onclick="document.getElementById('modal-{{ $p->id }}').close()" class="text-gray-400 hover:text-white text-2xl font-bold">
                                     &times;
@@ -205,8 +205,8 @@
                                                 {{ $index + 1 }}
                                             </div>
                                             <div>
-                                                <h5 class="text-xs font-bold text-gray-900">{{ $b->name }}</h5>
-                                                <span class="text-[11px] text-gray-500 font-mono">{{ $b->phone }}</span>
+                                                <h5 class="text-xs font-bold text-gray-900">${b.name}</h5>
+                                                <span class="text-[11px] text-gray-500 font-mono">${b.phone}</span>
                                             </div>
                                         </div>
                                         <span class="text-[10px] text-gray-400">{{ $b->created_at }}</span>
