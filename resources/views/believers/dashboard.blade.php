@@ -26,18 +26,12 @@
                     <i class="fas fa-cross"></i>
                 </div>
                 <div>
-                    <h2 class="font-bold text-sm text-white">{{ $pastor->name }}</h2>
-                    <span class="text-[10px] text-amber-300">{{ $pastor->pastorProfile->church_name ?? 'የወንጌል አገልግሎት' }}</span>
+                    <h2 class="font-bold text-sm text-white leading-tight">{{ $pastor->name }}</h2>
+                    <span class="text-[10px] text-amber-300 block">{{ $pastor->pastorProfile->church_name ?? 'የወንጌል አገልግሎት' }}</span>
                 </div>
             </div>
 
             <div class="flex items-center space-x-3">
-                <!-- PWA Install App Button -->
-                <button id="installAppBtn" onclick="installPWA()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition items-center space-x-1">
-                    <i class="fas fa-download"></i>
-                    <span>አፑን ጫን</span>
-                </button>
-
                 <!-- Believer Profile & Logout -->
                 <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
                     <i class="fas fa-user-circle text-secondary"></i>
@@ -93,10 +87,10 @@
                     <span class="text-xs text-slate-400 font-mono">{{ $believerPhone }}</span>
                 </div>
 
-                <!-- Messages -->
+                <!-- Messages Area -->
                 <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50" id="chatArea">
                     @forelse($chatMessages as $msg)
-                        <!-- የምዕመኑ ጥያቄ -->
+                        <!-- የምዕመኑ ጥያቄ (Right) -->
                         <div class="flex flex-col items-end">
                             <div class="bg-primary text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
                                 {{ $msg->message }}
@@ -104,7 +98,7 @@
                             <span class="text-[9px] text-gray-400 mt-1">{{ $msg->created_at }}</span>
                         </div>
 
-                        <!-- የፓስተሩ መልስ -->
+                        <!-- የፓስተሩ መልስ (Left) -->
                         @if($msg->reply)
                             <div class="flex flex-col items-start">
                                 <div class="bg-white border-2 border-secondary/30 p-3.5 rounded-2xl rounded-tl-none max-w-[85%] text-xs leading-relaxed shadow-sm text-gray-800">
@@ -131,7 +125,7 @@
                     @endforelse
                 </div>
 
-                <!-- Chat Input (ስምና ስልክ ድጋሚ አይጠየቅም!) -->
+                <!-- Chat Input Form (ስምና ስልክ ድጋሚ አይጠየቅም!) -->
                 <form action="/p/{{ $pastor->email }}/send-message" method="POST" class="p-3 bg-white border-t border-gray-200 flex items-center space-x-2">
                     @csrf
                     <input type="text" name="message" required placeholder="ጥያቄዎን ወይም ሸክምዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-4 py-3 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
@@ -197,28 +191,5 @@
         &copy; 2024 Wengel for World. Powered by Mela Solution.
     </footer>
 
-    <!-- PWA Install Script -->
-    <script>
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById('installAppBtn');
-            btn.classList.remove('hidden');
-            btn.classList.add('flex');
-        });
-
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('installAppBtn').classList.add('hidden');
-                    }
-                    deferredPrompt = null;
-                });
-            }
-        }
-    </script>
 </body>
 </html>
