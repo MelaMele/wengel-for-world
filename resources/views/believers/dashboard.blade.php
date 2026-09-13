@@ -31,15 +31,12 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <!-- Believer Profile & Logout -->
-                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-                    <i class="fas fa-user-circle text-secondary"></i>
-                    <span class="font-bold">{{ $believerName }}</span>
-                    <a href="/p/{{ $pastor->email }}/believer-logout" class="text-rose-400 hover:underline ml-1" title="ውጣ">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </a>
-                </div>
+            <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+                <i class="fas fa-user-circle text-secondary"></i>
+                <span class="font-bold">{{ $believerName }}</span>
+                <a href="/p/{{ $pastor->email }}/believer-logout" class="text-rose-400 hover:underline ml-1" title="ውጣ">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
             </div>
         </div>
     </header>
@@ -71,7 +68,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- 💬 ዘመናዊ የውይይት መስኮት (TWO-WAY CHAT) -->
+            <!-- 💬 ዘመናዊ የውይይት መስኮት (ድምፅ + ጽሁፍ) -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[550px]">
                 
                 <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
@@ -81,7 +78,7 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-sm">ከ {{ $pastor->name }} ጋር ውይይት</h4>
-                            <span class="text-[10px] text-emerald-400">ሚስጥራዊ የሁለትዮሽ መስመር</span>
+                            <span class="text-[10px] text-emerald-400">ሚስጥራዊ የሁለትዮሽ መስመር (በድምፅና በጽሁፍ)</span>
                         </div>
                     </div>
                     <span class="text-xs text-slate-400 font-mono">{{ $believerPhone }}</span>
@@ -90,10 +87,19 @@
                 <!-- Messages Area -->
                 <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50" id="chatArea">
                     @forelse($chatMessages as $msg)
-                        <!-- የምዕመኑ ጥያቄ (Right) -->
+                        <!-- የምዕመኑ መልእክት (Right) -->
                         <div class="flex flex-col items-end">
-                            <div class="bg-primary text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
-                                {{ $msg->message }}
+                            <div class="bg-primary text-white p-3 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
+                                @if(str_starts_with($msg->message, 'AUDIO_VOICE:'))
+                                    <div class="flex items-center space-x-2 py-1">
+                                        <i class="fas fa-microphone text-amber-300 text-sm"></i>
+                                        <audio controls class="h-8 max-w-[200px]">
+                                            <source src="{{ str_replace('AUDIO_VOICE:', '', $msg->message) }}" type="audio/webm">
+                                        </audio>
+                                    </div>
+                                @else
+                                    {{ $msg->message }}
+                                @endif
                             </div>
                             <span class="text-[9px] text-gray-400 mt-1">{{ $msg->created_at }}</span>
                         </div>
@@ -106,7 +112,16 @@
                                         <i class="fas fa-check-circle"></i>
                                         <span>የፓስተሩ መልስ፡</span>
                                     </div>
-                                    {{ $msg->reply }}
+                                    @if(str_starts_with($msg->reply, 'AUDIO_VOICE:'))
+                                        <div class="flex items-center space-x-2 py-1">
+                                            <i class="fas fa-microphone-alt text-secondary text-sm"></i>
+                                            <audio controls class="h-8 max-w-[200px]">
+                                                <source src="{{ str_replace('AUDIO_VOICE:', '', $msg->reply) }}" type="audio/webm">
+                                            </audio>
+                                        </div>
+                                    @else
+                                        {{ $msg->reply }}
+                                    @endif
                                 </div>
                                 <span class="text-[9px] text-secondary font-bold mt-1">ከአገልጋዩ የተሰጠ መልስ ✓</span>
                             </div>
@@ -119,21 +134,31 @@
                     @empty
                         <div class="text-center py-16 text-gray-400">
                             <i class="fas fa-comment-dots text-4xl mb-2 text-gray-300"></i>
-                            <p class="text-xs font-medium">የሚያስጨንቅዎትን ጥያቄ ወይም የምክር ፍላጎት ከስር ይጻፉ።</p>
-                            <p class="text-[10px] text-gray-400 mt-1">ፓስተሩ መልስ ሲሰጡዎት እዚህ ቦክስ ውስጥ ያዩታል!</p>
+                            <p class="text-xs font-medium">ጥያቄዎን ወይም የምክር ፍላጎትዎን በጽሁፍ ወይም በድምፅ ይላኩ።</p>
                         </div>
                     @endforelse
                 </div>
 
-                <!-- Chat Input Form (ስምና ስልክ ድጋሚ አይጠየቅም!) -->
-                <form action="/p/{{ $pastor->email }}/send-message" method="POST" class="p-3 bg-white border-t border-gray-200 flex items-center space-x-2">
-                    @csrf
-                    <input type="text" name="message" required placeholder="ጥያቄዎን ወይም ሸክምዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-4 py-3 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-                    <button type="submit" class="px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow transition flex items-center space-x-1">
-                        <span>ላክ</span>
-                        <i class="fas fa-paper-plane text-[10px]"></i>
-                    </button>
-                </form>
+                <!-- Input Area (ጽሁፍ + የማይክሮፎን ድምፅ መቅረጫ) -->
+                <div class="p-3 bg-white border-t border-gray-200">
+                    <form id="msgForm" action="/p/{{ $pastor->email }}/send-message" method="POST" class="flex items-center space-x-2">
+                        @csrf
+                        <input type="hidden" name="voice_data" id="voiceDataInput">
+                        
+                        <input type="text" name="message" id="textInput" placeholder="ጥያቄዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-4 py-3 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        
+                        <!-- 🎙️ Voice Record Button -->
+                        <button type="button" id="recordBtn" onclick="toggleRecording()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition" title="ድምፅ ለመቅረጽ ይጫኑ">
+                            <i class="fas fa-microphone text-sm" id="micIcon"></i>
+                        </button>
+
+                        <button type="submit" id="sendBtn" class="px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow transition flex items-center space-x-1">
+                            <span>ላክ</span>
+                            <i class="fas fa-paper-plane text-[10px]"></i>
+                        </button>
+                    </form>
+                    <span id="recordStatus" class="text-[10px] text-rose-600 hidden font-bold mt-1 animate-pulse">● ድምፅ እየተቀረጸ ነው... ለማቆምና ለመላክ ድጋሚ ማይኩን ይጫኑ</span>
+                </div>
 
             </div>
 
@@ -177,7 +202,6 @@
                     </div>
                 @empty
                     <div class="bg-white p-8 rounded-3xl text-center border border-gray-200">
-                        <i class="fas fa-book-reader text-gray-300 text-3xl mb-2"></i>
                         <p class="text-xs text-gray-400">እስካሁን የተጫነ ትምህርት የለም።</p>
                     </div>
                 @endforelse
@@ -186,10 +210,57 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        &copy; 2024 Wengel for World. Powered by Mela Solution.
-    </footer>
+    <!-- Audio Recording Script -->
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
 
+        async function toggleRecording() {
+            const btn = document.getElementById('recordBtn');
+            const icon = document.getElementById('micIcon');
+            const status = document.getElementById('recordStatus');
+            const form = document.getElementById('msgForm');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => {
+                            document.getElementById('voiceDataInput').value = reader.result;
+                            document.getElementById('textInput').removeAttribute('required');
+                            form.submit(); // ወዲያውኑ ድምፁን ይልካል
+                        };
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('bg-rose-600', 'text-white');
+                    icon.classList.remove('fa-microphone');
+                    icon.classList.add('fa-stop');
+                    status.classList.remove('hidden');
+                } catch (err) {
+                    alert('ማይክሮፎን መክፈት አልተቻለም፡ እባክዎ ፈቃድ ይስጡ።');
+        }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.classList.remove('bg-rose-600', 'text-white');
+                icon.classList.remove('fa-stop');
+                icon.classList.add('fa-microphone');
+                status.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>
