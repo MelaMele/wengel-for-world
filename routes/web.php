@@ -45,12 +45,10 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
     $believerPhone = session('believer_phone_' . $pastor->id);
     $believerName = session('believer_name_' . $pastor->id);
 
-    // ምዕመኑ ገና ካልገባ የመመዝገቢያ/መግቢያ ፎርም ያያል
     if (!$believerPhone) {
         return view('believers.login', compact('pastor'));
     }
 
-    // በስሙ የተላኩ የቻት መልእክቶች
     $chatMessages = DB::table('counseling_messages')
         ->where('pastor_id', $pastor->id)
         ->where('subject', 'like', "%{$believerPhone}%")
@@ -60,7 +58,7 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
     return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
 })->name('pastor.portal');
 
-// ምዕመኑ በስሙ መመዝገቢያ/መግቢያ (Believer Onboarding)
+// ምዕመኑ በስሙ መመዝገቢያ/መግቢያ
 Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
     $request->validate([
         'name' => 'required|string|max:100',
@@ -76,7 +74,6 @@ Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
     $name = trim($request->name);
     $phone = trim($request->phone);
 
-    // ምዕመኑ በዳታቤዝ ውስጥ መኖሩን ማረጋገጥና መመዝገብ
     $existing = DB::table('believers')
         ->where('pastor_id', $pastor->id)
         ->where('phone', $phone)
@@ -91,7 +88,6 @@ Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
         ]);
     }
 
-    // Session መያዝ
     session([
         'believer_name_' . $pastor->id => $name,
         'believer_phone_' . $pastor->id => $phone,
@@ -100,7 +96,6 @@ Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
     return redirect('/p/' . $slug);
 });
 
-// ምዕመኑ ከአካውንቱ መውጣት
 Route::get('/p/{slug}/believer-logout', function ($slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -112,7 +107,6 @@ Route::get('/p/{slug}/believer-logout', function ($slug) {
     return redirect('/p/' . $slug);
 });
 
-// ምዕመኑ በቻት ቦክስ መልእክት መላኪያ (ቀጥታ ያለ ድጋሚ ስም/ስልክ)
 Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -142,11 +136,10 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
-// 2. ሱፐር አድሚን ዳሽቦርድ (የፓስተሮች እና የምዕመናን ፖፕ-አፕ ዝርዝር)
+// 2. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     
-    // ለእያንዳንዱ ፓስተር የምዕመናንን ብዛትና ዝርዝር ማያያዝ
     foreach ($pastors as $p) {
         $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
         $p->believers_count = count($p->believers_list);
@@ -234,17 +227,13 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
 
-// አዲሱን believers ቴብል መፍጠሪያ (1 ጊዜ ብቻ የሚነካ)
-Route::get('/setup-believers-table', function () {
-    DB::statement("CREATE TABLE IF NOT EXISTS `believers` (
-      `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-      `pastor_id` bigint(20) UNSIGNED NOT NULL,
-      `name` varchar(255) NOT NULL,
-      `phone` varchar(100) NOT NULL,
-      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+// የነበሩ የሙከራ ዳታዎችን በሙሉ አጽድቶ ሲስተሙን ንጹህ ማድረጊያ (1 ጊዜ ብቻ የሚነካ)
+Route::get('/clean-all-demo-data', function () {
+    DB::table('counseling_messages')->truncate();
+    DB::table('teachings')->truncate();
+    DB::table('pastor_profiles')->truncate();
+    DB::table('believers')->truncate();
+    DB::table('users')->where('role', 'pastor')->delete();
 
-    return "<h2 style='color:green;'>✅ Believers Table Created! <a href='/super-admin'>ወደ አድሚን ሂድ</a></h2>";
+    return "<h2 style='color:green;font-family:sans-serif;'>✅ ሁሉም የሙከራ ዳታዎች ተጠርገው ሲስተሙ ሙሉ በሙሉ ንጹህ ሆኗል! <br><br> <a href='/super-admin'>ወደ Super Admin ሂድ</a></h2>";
 });
