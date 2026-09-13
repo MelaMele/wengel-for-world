@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PastorController;
+use App\Models\Teaching;
+use App\Models\Category;
 
 // ዋና መነሻ ገጽ
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -17,59 +19,61 @@ Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index'
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 Route::post('/pastors/{id}/counseling', [PastorController::class, 'sendCounseling'])->name('pastors.counseling');
 
-// በኮድ የፓስተሮችን መረጃ በቀጥታ ዳታቤዝ ውስጥ ማስገቢያ (1 ጊዜ ብቻ የምንነካው ሊንክ)
-Route::get('/setup-seed-data', function () {
+// የስብከት እና የትምህርት ገጾች
+Route::get('/teachings', function () {
+    $teachings = Teaching::with(['pastor', 'category'])->latest()->paginate(9);
+    $categories = Category::all();
+    return view('teachings.index', compact('teachings', 'categories'));
+})->name('teachings.index');
+
+Route::get('/teachings/{id}', function ($id) {
+    $teaching = Teaching::with(['pastor', 'category'])->findOrFail($id);
+    $teaching->increment('views_count');
+    return view('teachings.show', compact('teaching'));
+})->name('teachings.show');
+
+// የሙከራ ትምህርቶችን ዳታቤዝ ውስጥ ማስገቢያ (1 ጊዜ ብቻ የሚነካ)
+Route::get('/setup-teachings-data', function () {
     try {
-        // የነበረ ካለ እንዳይደጋገም ማጽዳት
-        DB::table('pastor_profiles')->delete();
-        DB::table('users')->where('role', 'pastor')->delete();
+        $pastor = DB::table('users')->where('role', 'pastor')->first();
+        if (!$pastor) {
+            return "እባክዎ መጀመሪያ /setup-seed-data ን ይጫኑ።";
+        }
 
-        // 1. ፓስተር ዳዊት
-        $pastor1 = DB::table('users')->insertGetId([
-            'name' => 'ፓስተር ዳዊት (Pastor Dawit)',
-            'email' => 'pastor.dawit@wengel.org',
-            'phone' => '+251911223344',
-            'role' => 'pastor',
-            'country' => 'Ethiopia',
-            'password' => bcrypt('password123'),
-            'is_verified' => 1,
+        DB::table('teachings')->delete();
+
+        // 1. የስብከት ድምፅ (Audio Teaching)
+        DB::table('teachings')->insert([
+            'pastor_id' => $pastor->id,
+            'category_id' => 1,
+            'title' => 'የእምነት ጉዞ በፈተናዎች መካከል',
+            'slug' => 'faith-through-trials',
+            'type' => 'audio',
+            'media_url' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // የሙከራ ኦዲዮ
+            'content' => 'በህይወታችን ውስጥ የሚያጋጥሙን ፈተናዎች እምነታችንን የሚያጠነክሩ እንጂ የሚያጠፉ አይደሉም። በዚህ ትምህርት ውስጥ ጳውሎስና ሲላስ በእስር ቤት ሆነው እንዴት እግዚአብሔርን እንዳመሰገኑ እንመለከታለን።',
+            'views_count' => 124,
+            'is_featured' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        DB::table('pastor_profiles')->insert([
-            'user_id' => $pastor1,
-            'title' => 'Pastor',
-            'church_name' => 'የሕይወት ቃል ቤተክርስቲያን',
-            'bio' => 'በወንጌል እውነት የተመሰረተ ትውልድ ለማፍራት፣ በፀሎትና በመንፈሳዊ ምክር ሰዎችን ለማነጽ የሚተጉ አገልጋይ።',
+        // 2. የቪዲዮ ስብከት (Video Sermon)
+        DB::table('teachings')->insert([
+            'pastor_id' => $pastor->id,
+            'category_id' => 2,
+            'title' => 'የተባረከ ትዳርና የሰላም ቤተሰብ መሰረቶች',
+            'slug' => 'foundations-of-blessed-marriage',
+            'type' => 'video',
+            'media_url' => 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            'content' => 'ትዳር በእግዚአብሔር ቃል ላይ ሲመሰረት በየትኛውም ማዕበል አይናወጥም። የባልና የሚስት የጋራ ኃላፊነቶችና የይቅርታ ሚና በዚህ ትምህርት ተዳሷል።',
+            'views_count' => 310,
+            'is_featured' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // 2. ወንጌላዊ ዮናስ
-        $pastor2 = DB::table('users')->insertGetId([
-            'name' => 'ወንጌላዊ ዮናስ (Evangelist Yonas)',
-            'email' => 'yonas@wengel.org',
-            'phone' => '+251922334455',
-            'role' => 'pastor',
-            'country' => 'Ethiopia',
-            'password' => bcrypt('password123'),
-            'is_verified' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('pastor_profiles')->insert([
-            'user_id' => $pastor2,
-            'title' => 'Evangelist',
-            'church_name' => 'ዓለም አቀፍ የወንጌል ብርሃን አገልግሎት',
-            'bio' => 'በሀገር ውስጥና በውጭ ላሉ ምዕመናን የመዳንን ወንጌል የሚያደርሱ፣ ለወጣቶችና ለቤተሰብ ምክር የሚሰጡ አገልጋይ።',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return "<h2 style='color:green;font-family:sans-serif;'>✅ የፓስተሮች መረጃ በተሳካ ሁኔታ ዳታቤዝ ውስጥ ገብቷል! <br><br> <a href='/pastors'>ወደ ፓስተሮች ገጽ ለመሄድ እዚህ ይጫኑ</a></h2>";
+        return "<h2 style='color:green;font-family:sans-serif;'>✅ የትምህርቶች መረጃ በተሳካ ሁኔታ ገብቷል! <br><br> <a href='/teachings'>ወደ ትምህርቶች ገጽ ለመሄድ እዚህ ይጫኑ</a></h2>";
     } catch (\Exception $e) {
-        return "<h2 style='color:red;'>ስህተት ተፈጥሯል: " . $e->getMessage() . "</h2>";
+        return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
     }
 });
