@@ -99,4 +99,30 @@
                         @if($t->media_url)
                             @if($t->type == 'audio')
                                 <audio controls class="w-full h-8 my-2">
-                                    <source src="{{ $t->medi
+                                    <source src="{{ $t->media_url }}">
+                                </audio>
+                            @else
+                                <a href="/teachings/{{ $t->id }}" class="text-xs font-bold text-secondary hover:underline flex items-center space-x-1">
+                                    <span>ተከታተል / ተመልከት</span>
+                                    <i class="fas fa-arrow-right text-[10px]"></i>
+                                </a>
+                            @endif
+                        @endif
+                    </div>
+                @empty
+                    <div class="bg-white p-8 rounded-2xl text-center border border-gray-200">
+                        <p class="text-xs text-gray-400">እስካሁን የተጫነ ትምህርት የለም።</p>
+                    </div>
+                @endforelse
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
+        &copy; 2024 Wengel for World. Powered by Mela Solution.
+    </footer>
+
+</body>
+</html>
