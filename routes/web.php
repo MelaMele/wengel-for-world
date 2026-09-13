@@ -203,12 +203,26 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     ]);
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
-// ይህ ሊንክ የድምፅ ፋይሎችን ያለምንም ገደብ እንዲይዝ ዳታቤዙን ወደ LONGTEXT ይቀይራል
+// የቻት ሰንጠረዡን ወደ LONGTEXT አድሶ በአዲስ መልክ መገንቢያ
 Route::get('/fix-audio-column', function () {
     try {
-        DB::statement("ALTER TABLE `counseling_messages` MODIFY `message` LONGTEXT NOT NULL;");
-        DB::statement("ALTER TABLE `counseling_messages` MODIFY `reply` LONGTEXT NULL;");
-        return "<h2 style='color:green;font-family:sans-serif;'>✅ የዳታቤዝ አምዶቹ ወደ LONGTEXT ተቀይረዋል! አሁን የፈለጉትን ያህል ርዝመት ያለው ድምፅ መላክ ይችላሉ። <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ተመለስ</a></h2>";
+        DB::statement("DROP TABLE IF EXISTS `counseling_messages`;");
+
+        DB::statement("CREATE TABLE `counseling_messages` (
+          `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+          `pastor_id` bigint(20) UNSIGNED NOT NULL,
+          `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
+          `subject` varchar(255) NOT NULL,
+          `message` LONGTEXT NOT NULL,
+          `reply` LONGTEXT NULL,
+          `status` enum('pending','answered','closed') NOT NULL DEFAULT 'pending',
+          `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+          `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (`id`),
+          FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+        return "<h2 style='color:green;font-family:sans-serif;'>✅ የቻት ሰንጠረዥ በ LONGTEXT አቅም ሙሉ በሙሉ ተስተካክሏል! አሁን ድምፅ መላክ ይችላሉ። <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
     } catch (\Exception $e) {
         return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
     }
