@@ -203,3 +203,13 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     ]);
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
+// ይህ ሊንክ የድምፅ ፋይሎችን ያለምንም ገደብ እንዲይዝ ዳታቤዙን ወደ LONGTEXT ይቀይራል
+Route::get('/fix-audio-column', function () {
+    try {
+        DB::statement("ALTER TABLE `counseling_messages` MODIFY `message` LONGTEXT NOT NULL;");
+        DB::statement("ALTER TABLE `counseling_messages` MODIFY `reply` LONGTEXT NULL;");
+        return "<h2 style='color:green;font-family:sans-serif;'>✅ የዳታቤዝ አምዶቹ ወደ LONGTEXT ተቀይረዋል! አሁን የፈለጉትን ያህል ርዝመት ያለው ድምፅ መላክ ይችላሉ። <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ተመለስ</a></h2>";
+    } catch (\Exception $e) {
+        return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
+    }
+});
