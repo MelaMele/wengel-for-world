@@ -36,7 +36,7 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-        <!-- Top Metrics -->
+        <!-- Top Metrics (እውነተኛ ቁጥሮች ብቻ) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between">
@@ -48,7 +48,7 @@
                         <i class="fas fa-user-tie"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-3">የተከራዩ አገልጋዮች</p>
+                <p class="text-xs text-gray-500 mt-3">የተመዘገቡ አገልጋዮች</p>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -61,7 +61,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <p class="text-xs text-emerald-600 font-bold mt-3">በሁሉም ፓስተሮች ስር የተመዘገቡ</p>
+                <p class="text-xs text-emerald-600 font-bold mt-3">በሁሉም ፓስተሮች ስር ያሉ</p>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -74,9 +74,16 @@
                         <i class="fas fa-play-circle"></i>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-3">ኦዲዮ፣ ቪዲዮ እና Live ስርጭቶች</p>
+                <p class="text-xs text-gray-500 mt-3">ኦዲዮ፣ ቪዲዮ እና ጽሁፎች</p>
             </div>
         </div>
+
+        @if(session('success'))
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 flex items-center space-x-3 text-sm font-bold">
+                <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
@@ -118,7 +125,7 @@
                 </div>
             </div>
 
-            <!-- Pastors Directory & Believers Pop-up Button -->
+            <!-- Pastors Directory -->
             <div class="lg:col-span-2 space-y-4">
                 <h3 class="font-extrabold text-gray-900 text-lg mb-2">የተመዘገቡ አገልጋዮች ቁጥጥር</h3>
 
@@ -135,8 +142,8 @@
                                 </div>
                             </div>
                             
-                            <!-- 🌟 Pop-up Trigger Button -->
-                            <button onclick="openBelieversModal('{{ $p->id }}', '{{ $p->name }}')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-secondary border border-amber-200 transition flex items-center space-x-2 shadow-sm">
+                            <!-- 🌟 Pop-up Button -->
+                            <button type="button" onclick="showModal('{{ $p->id }}')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-secondary border border-amber-200 transition flex items-center space-x-2">
                                 <i class="fas fa-users"></i>
                                 <span>{{ $p->believers_count }} ምዕመናን (ዝርዝር እይ)</span>
                             </button>
@@ -155,7 +162,7 @@
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
+                        <!-- Actions -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
                             <a href="/pastor-desk/{{ $p->id }}" target="_blank" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-primary font-bold rounded-lg transition">
                                 <i class="fas fa-desktop mr-1"></i> የፓስተሩን ዳሽቦርድ እይ
@@ -178,14 +185,50 @@
                             </div>
                         </div>
 
-                        <!-- Hidden JSON Data for Modal -->
-                        <script id="believers-data-{{ $p->id }}" type="application/json">
-                            {!! json_encode($p->believers_list) !!}
-                        </script>
+                        <!-- 🌟 Pop-up Modal ለእያንዳንዱ ፓስተር -->
+                        <dialog id="modal-{{ $p->id }}" class="rounded-3xl p-0 w-full max-w-lg shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
+                            <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-base">በ {{ $p->name }} ስር ያሉ ምዕመናን</h4>
+                                    <span class="text-xs text-amber-400">{{ $p->believers_count }} የተመዘገቡ ምዕመናን</span>
+                                </div>
+                                <button onclick="document.getElementById('modal-{{ $p->id }}').close()" class="text-gray-400 hover:text-white text-2xl font-bold">
+                                    &times;
+                                </button>
+                            </div>
+
+                            <div class="p-6 max-h-80 overflow-y-auto bg-white">
+                                @forelse($p->believers_list as $index => $b)
+                                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-gray-100 mb-2.5">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-full bg-blue-100 text-primary flex items-center justify-center text-xs font-bold">
+                                                {{ $index + 1 }}
+                                            </div>
+                                            <div>
+                                                <h5 class="text-xs font-bold text-gray-900">{{ $b->name }}</h5>
+                                                <span class="text-[11px] text-gray-500 font-mono">{{ $b->phone }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] text-gray-400">{{ $b->created_at }}</span>
+                                    </div>
+                                @empty
+                                    <div class="text-center py-8 text-gray-400 text-xs">
+                                        እስካሁን በዚህ ፓስተር ስር የተመዘገበ ምዕመን የለም።
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <div class="p-4 bg-gray-50 border-t border-gray-100 text-right">
+                                <button onclick="document.getElementById('modal-{{ $p->id }}').close()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-gray-800 font-bold text-xs rounded-xl transition">
+                                    ዝጋ
+                                </button>
+                            </div>
+                        </dialog>
+
                     </div>
                 @empty
                     <div class="bg-white rounded-2xl p-12 text-center border border-gray-200">
-                        <p class="text-xs text-gray-500">እስካሁን የተመዘገበ ፓስተር የለም።</p>
+                        <p class="text-xs text-gray-500">እስካሁን የተመዘገበ ፓስተር የለም። በግራ በኩል ያለውን ፎርም ተጠቅመው አዲስ ፓስተር ይመዝግቡ።</p>
                     </div>
                 @endforelse
             </div>
@@ -193,70 +236,12 @@
         </div>
     </main>
 
-    <!-- 🌟 BELIEVERS POP-UP MODAL -->
-    <div id="believersModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white max-w-lg w-full rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
-            <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
-                <div>
-                    <h3 class="font-bold text-base" id="modalPastorName">የምዕመናን ዝርዝር</h3>
-                    <span class="text-xs text-amber-400 font-medium" id="modalBelieversCount">0 ምዕመናን</span>
-                </div>
-                <button onclick="closeBelieversModal()" class="text-gray-400 hover:text-white text-2xl font-bold">
-                    &times;
-                </button>
-            </div>
-
-            <div class="p-6 max-h-96 overflow-y-auto" id="modalBelieversList">
-                <!-- Dynamic Content Loads Here -->
-            </div>
-
-            <div class="p-4 bg-gray-50 border-t border-gray-100 text-right">
-                <button onclick="closeBelieversModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-gray-800 font-bold text-xs rounded-xl transition">
-                    ዝጋ
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        function openBelieversModal(pastorId, pastorName) {
-            document.getElementById('modalPastorName').innerText = "በ " + pastorName + " ስር ያሉ ምዕመናን";
-            const dataEl = document.getElementById('believers-data-' + pastorId);
-            const list = JSON.parse(dataEl.textContent);
-
-            document.getElementById('modalBelieversCount').innerText = list.length + " የተመዘገቡ ምዕመናን";
-
-            const container = document.getElementById('modalBelieversList');
-            container.innerHTML = '';
-
-            if (list.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs">እስካሁን በዚህ ፓስተር ስር የተመዘገበ ምዕመን የለም።</div>';
-            } else {
-                list.forEach((b, index) => {
-                    container.innerHTML += `
-                        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-gray-100 mb-2.5">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 text-primary flex items-center justify-center text-xs font-bold">
-                                    ${index + 1}
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold text-gray-900">${b.name}</h5>
-                                    <span class="text-[11px] text-gray-500 font-mono">${b.phone}</span>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-gray-400">${b.created_at}</span>
-                        </div>
-                    `;
-                });
+        function showModal(id) {
+            const modal = document.getElementById('modal-' + id);
+            if (modal) {
+                modal.showModal();
             }
-
-            document.getElementById('believersModal').classList.remove('hidden');
-            document.getElementById('believersModal').classList.add('flex');
-        }
-
-        function closeBelieversModal() {
-            document.getElementById('believersModal').classList.add('hidden');
-            document.getElementById('believersModal').classList.remove('flex');
         }
     </script>
 </body>
