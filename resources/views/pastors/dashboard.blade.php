@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pastor->name }} | የቀጥታ ስርጭትና ማስተማሪያ ዳሽቦርድ</title>
+    <title>{{ $pastor->name }} | የአገልጋይ ዳሽቦርድ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -26,13 +26,14 @@
                     <i class="fas fa-cross"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-gray-900 text-sm sm:text-base">{{ $pastor->name }}</h1>
+                    <h1 class="font-extrabold text-gray-900 text-sm sm:text-base leading-tight">{{ $pastor->name }}</h1>
                     <span class="text-xs text-secondary font-bold">{{ $pastor->pastorProfile->church_name ?? 'የወንጌል አገልግሎት' }}</span>
                 </div>
             </div>
-            <a href="/p/{{ $pastor->email }}" target="_blank" class="px-4 py-2 bg-secondary text-white text-xs font-bold rounded-xl shadow hover:bg-amber-600 transition flex items-center space-x-1.5">
-                <i class="fas fa-globe"></i>
-                <span>የምዕመናን ገጽን ክፈት</span>
+            
+            <a href="/p/{{ $pastor->email }}" target="_blank" class="px-4 py-2 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center space-x-1.5">
+                <i class="fas fa-external-link-alt text-[10px]"></i>
+                <span>የእርስዎን ፖርታል እይ</span>
             </a>
         </div>
     </header>
@@ -45,6 +46,40 @@
                 <span class="font-bold text-sm">{{ session('success') }}</span>
             </div>
         @endif
+
+        <!-- 🚀 ዋናው ለምዕመናን የሚሰጥ ሊንክ እና ማጋሪያ ሳጥን (PORTAL INVITATION LINK BOX) -->
+        <div class="bg-gradient-to-r from-blue-950 via-primary to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-blue-900">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-amber-400/30">
+                        <i class="fas fa-link text-[10px]"></i>
+                        <span>የእርስዎ ቋሚ የምዕመናን መጋበዣ ሊንክ</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black mb-1">ይህንን ሊንክ ለዓለም ዙሪያ ምዕመናን ያጋሩ!</h2>
+                    <p class="text-xs text-blue-200 max-w-xl leading-relaxed">
+                        ምዕመናን ይህንን ሊንክ ተጭነው ትምህርቶችዎን ያገኛሉ፣ የቀጥታ ስርጭትዎን ይከታተላሉ እንዲሁም በምስጢር ጥያቄ ይጠይቁዎታል።
+                    </p>
+                </div>
+
+                <!-- Link Display & Copy Button -->
+                <div class="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-3">
+                    <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-3 rounded-2xl text-xs font-mono text-amber-300 w-full sm:w-auto text-center overflow-x-auto select-all" id="portalLinkText">
+                        https://wengel-for-world.vercel.app/p/{{ $pastor->email }}
+                    </div>
+
+                    <button onclick="copyPastorLink()" class="w-full sm:w-auto px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                        <i class="fas fa-copy" id="copyIcon"></i>
+                        <span id="copyBtnText">ሊንኩን ኮፒ አድርግ</span>
+                    </button>
+
+                    <!-- Telegram Share -->
+                    <a href="https://t.me/share/url?url=https://wengel-for-world.vercel.app/p/{{ $pastor->email }}&text={{ urlencode('የ' . $pastor->name . ' የወንጌል ትምህርቶች እና የቀጥታ ስርጭት መከታተያ ሊንክ') }}" target="_blank" class="w-full sm:w-auto px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs flex items-center justify-center space-x-1.5 transition" title="በቴሌግራም አጋራ">
+                        <i class="fab fa-telegram-plane text-sm"></i>
+                        <span class="sm:hidden">ቴሌግራም</span>
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <!-- SECTION 1: LIVE VIDEO & AUDIO BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
@@ -186,8 +221,25 @@
         </div>
     </main>
 
-    <!-- Camera Script -->
+    <!-- Scripts: Camera & Copy Link -->
     <script>
+        // Copy Pastor Portal Link
+        function copyPastorLink() {
+            const linkText = "https://wengel-for-world.vercel.app/p/{{ $pastor->email }}";
+            navigator.clipboard.writeText(linkText).then(() => {
+                const btnText = document.getElementById('copyBtnText');
+                const copyIcon = document.getElementById('copyIcon');
+                
+                btnText.innerText = "ኮፒ ተደርጓል! ✓";
+                copyIcon.className = "fas fa-check";
+                
+                setTimeout(() => {
+                    btnText.innerText = "ሊንኩን ኮፒ አድርግ";
+                    copyIcon.className = "fas fa-copy";
+                }, 3000);
+            });
+        }
+
         let isStreaming = false;
         let stream = null;
 
@@ -208,7 +260,7 @@
                     btnText.innerText = "ስርጭቱን አቁም (Stop Live)";
                     isStreaming = true;
                 } catch (err) {
-                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ለብሮውዘርዎ የካሜራ ፈቃድ ይስጡ።");
+                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ።");
                 }
             } else {
                 if (stream) {
