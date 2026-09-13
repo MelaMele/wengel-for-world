@@ -25,7 +25,7 @@
     <!-- Header / Navbar -->
     <header class="sticky top-0 z-50 bg-white/95 backdrop-blur shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
-            <div class="flex items-center space-x-3">
+            <a href="/" class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-md">
                     W
                 </div>
@@ -33,19 +33,23 @@
                     <span class="text-xl font-black tracking-tight text-primary block leading-none">WENGEL</span>
                     <span class="text-xs font-semibold text-secondary tracking-widest uppercase">FOR WORLD</span>
                 </div>
-            </div>
+            </a>
 
             <nav class="hidden md:flex space-x-8 font-medium text-gray-600">
-                <a href="#" class="text-primary font-bold">መነሻ</a>
-                <a href="#pastors" class="hover:text-primary transition">አገልጋዮች</a>
-                <a href="#teachings" class="hover:text-primary transition">ትምህርቶች</a>
-                <a href="#prayer" class="hover:text-primary transition">የፀሎት ጥያቄ</a>
+                <a href="/" class="text-primary font-bold">መነሻ</a>
+                <a href="#services" class="hover:text-primary transition">አገልግሎቶች</a>
+                <a href="/prayer-requests" class="text-secondary hover:text-amber-600 font-bold transition flex items-center space-x-1">
+                    <i class="fas fa-praying-hands text-xs"></i>
+                    <span>የፀሎት ጥያቄ</span>
+                </a>
                 <a href="#about" class="hover:text-primary transition">ስለ እኛ</a>
             </nav>
 
             <div class="flex items-center space-x-3">
-                <a href="#" class="px-4 py-2 text-sm font-semibold text-primary hover:bg-blue-50 rounded-lg transition">ግባ / Sign In</a>
-                <a href="#" class="px-4 py-2 text-sm font-semibold text-white bg-secondary hover:bg-amber-600 rounded-lg shadow transition">ተቀላቀል</a>
+                <a href="/prayer-requests" class="px-5 py-2.5 text-sm font-bold text-white bg-secondary hover:bg-amber-600 rounded-xl shadow-md transition flex items-center space-x-2">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                    <span>ፀሎት ጠይቅ</span>
+                </a>
             </div>
         </div>
     </header>
@@ -63,20 +67,20 @@
                 በአገር ውስጥም ሆነ በውጭ የምትገኙ ምዕመናን ከታመኑ አገልጋዮች ጋር የምትገናኙበት፣ የምትማሩበት፣ ምክርና ፀሎት የምታገኙበት ዲጂታል መንፈሳዊ መድረክ።
             </p>
             <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-                <a href="#teachings" class="w-full sm:w-auto px-8 py-4 bg-secondary text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 transition flex items-center justify-center space-x-2">
-                    <i class="fas fa-play-circle"></i>
-                    <span>ትምህርቶችን አዳምጥ</span>
+                <a href="/prayer-requests" class="w-full sm:w-auto px-8 py-4 bg-secondary text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 transition flex items-center justify-center space-x-2">
+                    <i class="fas fa-praying-hands"></i>
+                    <span>የፀሎት ጥያቄ አቅርብ</span>
                 </a>
-                <a href="#pastors" class="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl backdrop-blur border border-white/20 transition flex items-center justify-center space-x-2">
-                    <i class="fas fa-user-shield"></i>
-                    <span>አገልጋዮችን ተመልከት</span>
+                <a href="#services" class="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl backdrop-blur border border-white/20 transition flex items-center justify-center space-x-2">
+                    <i class="fas fa-compass"></i>
+                    <span>አገልግሎቶችን ተመልከት</span>
                 </a>
             </div>
         </div>
     </section>
 
     <!-- Core Services Overview -->
-    <section class="py-20 px-4 max-w-7xl mx-auto">
+    <section id="services" class="py-20 px-4 max-w-7xl mx-auto">
         <div class="text-center max-w-3xl mx-auto mb-16">
             <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">የመድረኩ ዋና ዋና አገልግሎቶች</h2>
             <p class="mt-4 text-lg text-gray-600">ምዕመናንን በመንፈሳዊ ህይወት ለማነጽ የተዘጋጁ አገልግሎቶች</p>
@@ -89,9 +93,10 @@
                     <i class="fas fa-bible"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-3">የተከታታይ ትምህርቶች</h3>
-                <p class="text-gray-600 leading-relaxed mb-4">
+                <p class="text-gray-600 leading-relaxed mb-6">
                     ከፓስተሮች የተዘጋጁ የድምፅ፣ የቪዲዮ እና የጽሁፍ ትምህርቶችን በቀላሉ በማንኛውም ሰዓት ያግኙ።
                 </p>
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">በቅርብ ቀን የሚለቀቅ</span>
             </div>
 
             <!-- Service 2 -->
@@ -100,30 +105,56 @@
                     <i class="fas fa-comments"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-3">የግል መንፈሳዊ ምክር</h3>
-                <p class="text-gray-600 leading-relaxed mb-4">
+                <p class="text-gray-600 leading-relaxed mb-6">
                     የሕይወትና የእምነት ጥያቄዎችዎን በሚስጥራዊነት ለፓስተሮች አቅርበው መጽሐፍ ቅዱሳዊ መልስ ያግኙ።
                 </p>
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full">በቅርብ ቀን የሚለቀቅ</span>
             </div>
 
-            <!-- Service 3 -->
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+            <!-- Service 3 (Active) -->
+            <div class="bg-white p-8 rounded-2xl shadow-md border-2 border-emerald-500/30 relative hover:shadow-lg transition">
+                <div class="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                    አሁን ክፍት ነው (Live)
+                </div>
                 <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl mb-6">
                     <i class="fas fa-praying-hands"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-3">የፀሎት ጥያቄ መስመር</h3>
-                <p class="text-gray-600 leading-relaxed mb-4">
+                <p class="text-gray-600 leading-relaxed mb-6">
                     የፀሎት ፍላጎትዎን በስም ወይም ማንነትዎን ሳይገልጹ (Anonymous) ለፀሎት አገልጋዮች ያጋሩ።
                 </p>
+                <a href="/prayer-requests" class="inline-flex items-center space-x-2 text-emerald-600 font-bold hover:text-emerald-700">
+                    <span>ጥያቄዎን አሁኑኑ ያስገቡ</span>
+                    <i class="fas fa-arrow-right text-sm"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="bg-blue-50/50 py-16 px-4 border-t border-gray-200">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">ስለ "ወንጌል ለዓለም" (Wengel for World)</h2>
+            <p class="text-gray-600 leading-relaxed text-sm sm:text-base mb-8">
+                ይህ ፕላትፎርም በዓለም ዙሪያ ለሚገኙ ምዕመናን የእግዚአብሔርን ቃል ለማድረስ፣ ታማኝ አገልጋዮችን ከተከታዮቻቸው ጋር ለማስተሳሰር እና በመንፈሳዊ ምክርና ፀሎት ሰዎችን ለመደገፍ የተዘጋጀ ዘመናዊ የወንጌል መድረክ ነው።
+            </p>
+            <div class="inline-flex items-center space-x-2 text-xs font-medium text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                <i class="fas fa-shield-alt text-primary"></i>
+                <span>ሚስጥራዊነቱ እና ደህንነቱ የተጠበቀ መድረክ</span>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="bg-slate-900 text-gray-400 py-12 px-4 border-t border-slate-800">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
-            <div class="mb-6 md:mb-0 text-center md:text-left">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-center md:text-left">
                 <h4 class="text-white font-bold text-lg">Wengel for World</h4>
                 <p class="text-sm mt-1">የወንጌል ቴክኖሎጂ መፍትሔ — Developed by Mela Solution</p>
+            </div>
+            <div class="flex items-center space-x-6 text-sm">
+                <a href="/" class="hover:text-white transition">መነሻ</a>
+                <a href="/prayer-requests" class="hover:text-white transition">የፀሎት ጥያቄዎች</a>
             </div>
             <div class="text-sm">
                 &copy; 2024 Wengel for World. መብቱ በህግ የተጠበቀ ነው።
