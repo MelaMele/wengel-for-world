@@ -1,22 +1,25 @@
 <?php
 
-// Vercel Serverless Writable Cache and Storage Fix
-// በ /tmp ስር ጊዜያዊ ሊጻፍባቸው የሚችሉ ፎልደሮችን መፍጠር
-if (!is_dir('/tmp/storage/framework/views')) {
-    mkdir('/tmp/storage/framework/views', 0755, true);
-}
-if (!is_dir('/tmp/storage/framework/cache')) {
-    mkdir('/tmp/storage/framework/cache', 0755, true);
-}
-if (!is_dir('/tmp/storage/framework/sessions')) {
-    mkdir('/tmp/storage/framework/sessions', 0755, true);
-}
-if (!is_dir('/tmp/storage/logs')) {
-    mkdir('/tmp/storage/logs', 0755, true);
-}
-if (!is_dir('/tmp/bootstrap/cache')) {
-    mkdir('/tmp/bootstrap/cache', 0755, true);
+// Vercel Serverless 환경 መፍጠሪያ
+$dirs = [
+    '/tmp/storage/framework/views',
+    '/tmp/storage/framework/cache/data',
+    '/tmp/storage/framework/sessions',
+    '/tmp/storage/logs',
+    '/tmp/bootstrap/cache'
+];
+
+foreach ($dirs as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
 }
 
-// Laravelን ማስነሳት
+// የካሽ ቦታዎችን ወደ /tmp ማዞር
+putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
+putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
+putenv('APP_CONFIG_CACHE=/tmp/bootstrap/cache/config.php');
+putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes.php');
+putenv('APP_EVENTS_CACHE=/tmp/bootstrap/cache/events.php');
+
 require __DIR__ . '/../public/index.php';
