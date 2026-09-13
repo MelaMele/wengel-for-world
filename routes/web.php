@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የፓስተሩ ፖርታል (ከነ Chat Box ጋር)
+// 1. የፓስተሩ ፖርታል ለምዕመናን (የታገደ ከሆነ ምዕመኑ ማየት አይችልም)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -42,7 +42,6 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
         return view('pastors.suspended', compact('pastor'));
     }
 
-    // የተጠቃሚው Session ካለ ያደረጋቸውን የቻት መልእክቶች ማውጣት
     $believerPhone = session('believer_phone');
     $believerName = session('believer_name');
     $chatMessages = [];
@@ -58,27 +57,22 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
     return view('pastors.portal', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
 })->name('pastor.portal');
 
-// 2. ምዕመኑ በስሙ መግቢያ ወይም መልእክት መላኪያ (Send Chat)
 Route::post('/p/{slug}/send-chat', function (Request $request, $slug) {
-    $request->validate([
-        'sender_name' => 'required|string',
-        'sender_phone' => 'required|string',
-        'message' => 'required|string',
-    ]);
-
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
             $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
         })
         ->firstOrFail();
 
-    // Session ውስጥ ማስቀመጥ (ሲስተሙ እንዲያስታውሰው)
+    if (!$pastor->is_verified) {
+        return back()->with('error', 'አገልግሎቱ ለጊዜው ስለታገደ መልእክት መላክ አይቻልም።');
+    }
+
     session([
         'believer_name' => $request->sender_name,
         'believer_phone' => $request->sender_phone,
     ]);
 
-    // ዳታቤዝ ላይ ማስገባት
     DB::table('counseling_messages')->insert([
         'pastor_id' => $pastor->id,
         'user_id' => 1,
@@ -92,13 +86,62 @@ Route::post('/p/{slug}/send-chat', function (Request $request, $slug) {
     return back()->with('counseling_success', 'መልእክትዎ ተልኳል!');
 });
 
-// ምዕመኑ ከአካውንቱ መውጣት ከፈለገ (Logout)
 Route::get('/p/{slug}/logout', function ($slug) {
     session()->forget(['believer_name', 'believer_phone']);
     return redirect('/p/' . $slug);
 });
 
-// ሱፐር አድሚን ዳሽቦርድ
+// 2. የፓስተሩ ዳሽቦርድ (🔒 የታገደ ከሆነ ፓስተሩም መግባት አይችልም!)
+Route::get('/pastor-desk/{id}', function ($id) {
+    $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
+
+    // እገዳ ፍተሻ (Suspension Check for Pastor)
+    if (!$pastor->is_verified) {
+        return view('pastors.dashboard-locked', compact('pastor'));
+    }
+
+    $messages = DB::table('counseling_messages')->where('pastor_id', $id)->orderByDesc('created_at')->get();
+    $teachings = Teaching::where('pastor_id', $id)->latest()->get();
+    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings'));
+})->name('pastor.dashboard');
+
+// የታገደ ከሆነ አፕሎድ ማድረግ ወይም መመለስ አይችልም
+Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
+    $pastor = User::findOrFail($id);
+    if (!$pastor->is_verified) {
+        return back()->with('error', 'አካውንትዎ ስለታገደ ይዘት መጫን አይችሉም።');
+    }
+
+    $request->validate(['title' => 'required', 'content_type' => 'required|in:audio,video,article,live']);
+    $mediaUrl = null;
+    if ($request->hasFile('media_file')) {
+        $file = $request->file('media_file');
+        $mediaUrl = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file));
+    }
+    DB::table('teachings')->insert([
+        'pastor_id' => $id, 'category_id' => 1, 'title' => $request->title,
+        'slug' => strtolower(str_replace(' ', '-', $request->title)) . '-' . rand(100, 999),
+        'type' => $request->content_type == 'live' ? 'video' : $request->content_type,
+        'media_url' => $mediaUrl,
+        'content' => $request->article_body ?? $request->description,
+        'views_count' => 0, 'is_featured' => 1, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    return back()->with('success', 'ይዘቱ ተጭኗል!');
+});
+
+Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
+    $pastor = User::findOrFail($id);
+    if (!$pastor->is_verified) {
+        return back()->with('error', 'አካውንትዎ ስለታገደ መልስ መስጠት አይችሉም።');
+    }
+
+    DB::table('counseling_messages')->where('id', $request->message_id)->where('pastor_id', $id)->update([
+        'reply' => $request->reply, 'status' => 'answered', 'updated_at' => now(),
+    ]);
+    return back()->with('success', 'መልስዎ ተልኳል!');
+});
+
+// 3. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     $believersCount = DB::table('counseling_messages')->distinct('user_id')->count('user_id') + 45;
@@ -130,37 +173,4 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     DB::table('counseling_messages')->where('pastor_id', $id)->delete();
     DB::table('users')->where('id', $id)->delete();
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
-});
-
-// የፓስተሩ ዳሽቦርድ
-Route::get('/pastor-desk/{id}', function ($id) {
-    $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
-    $messages = DB::table('counseling_messages')->where('pastor_id', $id)->orderByDesc('created_at')->get();
-    $teachings = Teaching::where('pastor_id', $id)->latest()->get();
-    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings'));
-})->name('pastor.dashboard');
-
-Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
-    $request->validate(['title' => 'required', 'content_type' => 'required|in:audio,video,article,live']);
-    $mediaUrl = null;
-    if ($request->hasFile('media_file')) {
-        $file = $request->file('media_file');
-        $mediaUrl = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file));
-    }
-    DB::table('teachings')->insert([
-        'pastor_id' => $id, 'category_id' => 1, 'title' => $request->title,
-        'slug' => strtolower(str_replace(' ', '-', $request->title)) . '-' . rand(100, 999),
-        'type' => $request->content_type == 'live' ? 'video' : $request->content_type,
-        'media_url' => $mediaUrl,
-        'content' => $request->article_body ?? $request->description,
-        'views_count' => 0, 'is_featured' => 1, 'created_at' => now(), 'updated_at' => now(),
-    ]);
-    return back()->with('success', 'ይዘቱ ተጭኗል!');
-});
-
-Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
-    DB::table('counseling_messages')->where('id', $request->message_id)->where('pastor_id', $id)->update([
-        'reply' => $request->reply, 'status' => 'answered', 'updated_at' => now(),
-    ]);
-    return back()->with('success', 'መልስዎ ተልኳል!');
 });
