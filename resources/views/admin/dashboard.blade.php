@@ -36,7 +36,7 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-        <!-- Metrics -->
+        <!-- Top Metrics -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between">
@@ -61,7 +61,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                 </div>
-                <p class="text-xs text-emerald-600 font-bold mt-3">በሁሉም ፓስተሮች ስር ያሉ</p>
+                <p class="text-xs text-emerald-600 font-bold mt-3">በሁሉም ፓስተሮች ስር የተመዘገቡ</p>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -78,10 +78,9 @@
             </div>
         </div>
 
-        <!-- Pastors List with Believers Pop-up Modal -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Link Generator -->
+            <!-- Link Generator Form -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-24">
                     <h3 class="text-base font-black text-primary mb-1">ለአዲስ ፓስተር ሊንክ ማመንጫ</h3>
@@ -119,7 +118,7 @@
                 </div>
             </div>
 
-            <!-- Pastors Directory & Believers Count -->
+            <!-- Pastors Directory & Believers Pop-up Button -->
             <div class="lg:col-span-2 space-y-4">
                 <h3 class="font-extrabold text-gray-900 text-lg mb-2">የተመዘገቡ አገልጋዮች ቁጥጥር</h3>
 
@@ -136,8 +135,8 @@
                                 </div>
                             </div>
                             
-                            <!-- Believers Count Button (Pop-up Trigger) -->
-                            <button onclick="openBelieversModal('{{ $p->id }}', '{{ $p->name }}')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-secondary border border-amber-200 transition flex items-center space-x-1.5 shadow-sm">
+                            <!-- 🌟 Pop-up Trigger Button -->
+                            <button onclick="openBelieversModal('{{ $p->id }}', '{{ $p->name }}')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-secondary border border-amber-200 transition flex items-center space-x-2 shadow-sm">
                                 <i class="fas fa-users"></i>
                                 <span>{{ $p->believers_count }} ምዕመናን (ዝርዝር እይ)</span>
                             </button>
@@ -194,15 +193,15 @@
         </div>
     </main>
 
-    <!-- 🌟 BELIEVERS POP-UP MODAL (የምዕመናን ፖፕ-አፕ ዝርዝር መስኮት) -->
+    <!-- 🌟 BELIEVERS POP-UP MODAL -->
     <div id="believersModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white max-w-lg w-full rounded-3xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in duration-200">
+        <div class="bg-white max-w-lg w-full rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
             <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
                 <div>
                     <h3 class="font-bold text-base" id="modalPastorName">የምዕመናን ዝርዝር</h3>
                     <span class="text-xs text-amber-400 font-medium" id="modalBelieversCount">0 ምዕመናን</span>
                 </div>
-                <button onclick="closeBelieversModal()" class="text-gray-400 hover:text-white text-xl">
+                <button onclick="closeBelieversModal()" class="text-gray-400 hover:text-white text-2xl font-bold">
                     &times;
                 </button>
             </div>
