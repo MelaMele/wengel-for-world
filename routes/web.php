@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የፓስተሩ ፖርታል (የምዕመን Dashboard መግቢያና ማሳያ)
+// 1. የፓስተሩ ሊንክ ለምዕመናን (ምዕመናን የሚገቡበት)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -58,7 +58,7 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
     return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
 })->name('pastor.portal');
 
-// ምዕመኑ በስሙ መመዝገቢያ/መግቢያ
+// ምዕመኑ በስሙ መመዝገቢያ
 Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
     $request->validate([
         'name' => 'required|string|max:100',
@@ -136,7 +136,7 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
-// 2. ሱፐር አድሚን ዳሽቦርድ
+// 2. ሱፐር አድሚን ዳሽቦርድ (ፓስተሮችን መመዝገብ፣ መቆጣጠርና የዳሽቦርድ ሊንካቸውን መስጠት ብቻ)
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     
@@ -151,15 +151,35 @@ Route::get('/super-admin', function () {
     return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount'));
 })->name('admin.dashboard');
 
+// አዲስ ፓስተር መዝግቦ የዳሽቦርድ ቁልፍ መስጠት
 Route::post('/super-admin/generate-pastor', function (Request $request) {
-    $request->validate(['name' => 'required', 'church_name' => 'required', 'phone' => 'required', 'slug' => 'required|unique:users,email']);
+    $request->validate([
+        'name' => 'required',
+        'church_name' => 'required',
+        'phone' => 'required',
+        'slug' => 'required|unique:users,email'
+    ]);
+
     $userId = DB::table('users')->insertGetId([
-        'name' => $request->name, 'email' => strtolower(trim($request->slug)), 'phone' => $request->phone, 'role' => 'pastor', 'password' => bcrypt('123456'), 'is_verified' => 1, 'created_at' => now(), 'updated_at' => now(),
+        'name' => $request->name,
+        'email' => strtolower(trim($request->slug)),
+        'phone' => $request->phone,
+        'role' => 'pastor',
+        'password' => bcrypt('123456'),
+        'is_verified' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
+
     DB::table('pastor_profiles')->insert([
-        'user_id' => $userId, 'church_name' => $request->church_name, 'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ', 'created_at' => now(), 'updated_at' => now(),
+        'user_id' => $userId,
+        'church_name' => $request->church_name,
+        'bio' => $request->bio ?? 'የእግዚአብሔር አገልጋይ',
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
-    return back()->with('success', 'ለአገልጋዩ ልዩ ሊንክ በተሳካ ሁኔታ ተፈጥሯል!');
+
+    return back()->with('success', 'አገልጋዩ በተሳካ ሁኔታ ተመዝግቧል! የዳሽቦርድ ሊንኩን ለፓስተሩ ይስጡ።');
 });
 
 Route::post('/super-admin/toggle-status/{id}', function ($id) {
@@ -178,7 +198,7 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
 });
 
-// 3. የፓስተሩ ዳሽቦርድ
+// 3. የፓስተሩ ዳሽቦርድ (የምዕመናኑን ሊንክ ፓስተሩ ራሱ እዚህ ያገኘዋል)
 Route::get('/pastor-desk/{id}', function ($id) {
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
     if (!$pastor->is_verified) {
@@ -227,7 +247,7 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
 
-// የነበሩ የሙከራ ዳታዎችን በሙሉ አጽድቶ ሲስተሙን ንጹህ ማድረጊያ (1 ጊዜ ብቻ የሚነካ)
+// ማጽጃ
 Route::get('/clean-all-demo-data', function () {
     DB::table('counseling_messages')->truncate();
     DB::table('teachings')->truncate();
@@ -235,5 +255,5 @@ Route::get('/clean-all-demo-data', function () {
     DB::table('believers')->truncate();
     DB::table('users')->where('role', 'pastor')->delete();
 
-    return "<h2 style='color:green;font-family:sans-serif;'>✅ ሁሉም የሙከራ ዳታዎች ተጠርገው ሲስተሙ ሙሉ በሙሉ ንጹህ ሆኗል! <br><br> <a href='/super-admin'>ወደ Super Admin ሂድ</a></h2>";
+    return "<h2 style='color:green;font-family:sans-serif;'>✅ ሁሉም ዳታዎች ተጠርገዋል! <br><br> <a href='/super-admin'>ወደ Super Admin ሂድ</a></h2>";
 });
