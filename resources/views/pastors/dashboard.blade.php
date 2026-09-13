@@ -32,8 +32,8 @@
             </div>
             
             <a href="/p/{{ $pastor->email }}" target="_blank" class="px-4 py-2 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center space-x-1.5">
-                <i class="fas fa-external-link-alt text-[10px]"></i>
-                <span>የእርስዎን ፖርታል እይ</span>
+                <i class="fas fa-globe text-[10px]"></i>
+                <span>የምዕመናን ገጽን እይ</span>
             </a>
         </div>
     </header>
@@ -47,36 +47,29 @@
             </div>
         @endif
 
-        <!-- 🚀 ዋናው ለምዕመናን የሚሰጥ ሊንክ እና ማጋሪያ ሳጥን (PORTAL INVITATION LINK BOX) -->
+        <!-- 🚀 የፓስተሩ ቋሚ ሊንክ ለምዕመናን -->
         <div class="bg-gradient-to-r from-blue-950 via-primary to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-blue-900">
             <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div>
                     <div class="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-amber-400/30">
                         <i class="fas fa-link text-[10px]"></i>
-                        <span>የእርስዎ ቋሚ የምዕመናን መጋበዣ ሊንክ</span>
+                        <span>ለምዕመናን የሚያጋሩት የእርስዎ ቋሚ ሊንክ</span>
                     </div>
-                    <h2 class="text-xl sm:text-2xl font-black mb-1">ይህንን ሊንክ ለዓለም ዙሪያ ምዕመናን ያጋሩ!</h2>
+                    <h2 class="text-xl sm:text-2xl font-black mb-1">ይህንን 1 ሊንክ ለምዕመናን በሙሉ ይላኩ!</h2>
                     <p class="text-xs text-blue-200 max-w-xl leading-relaxed">
-                        ምዕመናን ይህንን ሊንክ ተጭነው ትምህርቶችዎን ያገኛሉ፣ የቀጥታ ስርጭትዎን ይከታተላሉ እንዲሁም በምስጢር ጥያቄ ይጠይቁዎታል።
+                        ምዕመናን ይህንን ሊንክ ተጭነው ስማቸውን በማስገባት በቀጥታ ይማራሉ፣ በድምፅና በጽሁፍ ሚስጥራዊ ጥያቄ ይጠይቁዎታል።
                     </p>
                 </div>
 
-                <!-- Link Display & Copy Button -->
                 <div class="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-3">
-                    <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-3 rounded-2xl text-xs font-mono text-amber-300 w-full sm:w-auto text-center overflow-x-auto select-all" id="portalLinkText">
+                    <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-3 rounded-2xl text-xs font-mono text-amber-300 w-full sm:w-auto text-center select-all">
                         https://wengel-for-world.vercel.app/p/{{ $pastor->email }}
                     </div>
 
-                    <button onclick="copyPastorLink()" class="w-full sm:w-auto px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 whitespace-nowrap">
-                        <i class="fas fa-copy" id="copyIcon"></i>
+                    <button onclick="copyLink()" class="w-full sm:w-auto px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                        <i class="fas fa-copy"></i>
                         <span id="copyBtnText">ሊንኩን ኮፒ አድርግ</span>
                     </button>
-
-                    <!-- Telegram Share -->
-                    <a href="https://t.me/share/url?url=https://wengel-for-world.vercel.app/p/{{ $pastor->email }}&text={{ urlencode('የ' . $pastor->name . ' የወንጌል ትምህርቶች እና የቀጥታ ስርጭት መከታተያ ሊንክ') }}" target="_blank" class="w-full sm:w-auto px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs flex items-center justify-center space-x-1.5 transition" title="በቴሌግራም አጋራ">
-                        <i class="fab fa-telegram-plane text-sm"></i>
-                        <span class="sm:hidden">ቴሌግራም</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -85,7 +78,6 @@
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 
-                <!-- Video Camera Frame -->
                 <div class="w-full md:w-2/3 bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border-2 border-slate-700 shadow-inner">
                     <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
                     
@@ -97,30 +89,25 @@
                         <p class="text-xs text-slate-500 max-w-sm mx-auto">ካሜራዎንና ማይክሮፎንዎን ከፍተው ለምዕመናን በቀጥታ ፊት ለፊት ያስተምሩ እና ይጸልዩ።</p>
                     </div>
 
-                    <!-- Live Indicator Badge -->
                     <div id="liveBadge" class="absolute top-4 left-4 bg-rose-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full hidden items-center space-x-1 animate-pulse">
                         <span class="w-2 h-2 rounded-full bg-white"></span>
                         <span>🔴 በቀጥታ ስርጭት ላይ (LIVE)</span>
                     </div>
                 </div>
 
-                <!-- Live Control Panel -->
                 <div class="w-full md:w-1/3 flex flex-col justify-between space-y-4">
                     <div>
                         <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-1">ቀጥታ አገልግሎት</span>
                         <h3 class="text-xl font-black mb-2">የቪዲዮና ድምፅ ስርጭት ይጀምሩ</h3>
                         <p class="text-xs text-slate-400 leading-relaxed mb-6">
-                            አዝራሩን ሲጫኑ የኮምፒውተርዎ ወይም የስልክዎ ካሜራ ይከፈታል፤ ምዕመናን ወዲያውኑ ሊያዩዎትና ሊሰሙዎት ይችላሉ።
+                            አዝራሩን ሲጫኑ ካሜራዎ ይከፈታል፤ ምዕመናን ወዲያውኑ ሊያዩዎትና ሊሰሙዎት ይችላሉ።
                         </p>
                     </div>
 
-                    <div class="space-y-3">
-                        <button id="startLiveBtn" onclick="toggleCamera()" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
-                            <i class="fas fa-video"></i>
-                            <span id="btnText">ካሜራና ማይክሮፎን ክፈት (Start Live)</span>
-                        </button>
-                        <p class="text-[10px] text-slate-500 text-center">ምንም ተጨማሪ ሶፍትዌር አያስፈልግም</p>
-                    </div>
+                    <button id="startLiveBtn" onclick="toggleCamera()" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-video"></i>
+                        <span id="btnText">ካሜራና ማይክሮፎን ክፈት (Start Live)</span>
+                    </button>
                 </div>
 
             </div>
@@ -128,7 +115,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- SECTION 2: FROM GALLERY UPLOAD & WRITTEN TEACHING -->
+            <!-- SECTION 2: FROM GALLERY UPLOAD -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200">
                 <h3 class="text-lg font-black text-gray-900 mb-1 flex items-center space-x-2">
                     <i class="fas fa-photo-video text-secondary"></i>
@@ -140,7 +127,7 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የትምህርቱ ርዕስ *</label>
-                        <input type="text" name="title" required placeholder="ለምሳሌ፡ የጠዋት ፀሎት / የዕለት ማሰላሰያ" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                        <input type="text" name="title" required placeholder="ለምሳሌ፡ የጠዋት ፀሎት" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
                     </div>
 
                     <div>
@@ -152,38 +139,35 @@
                         </select>
                     </div>
 
-                    <!-- File Selector (For Audio / Video) -->
                     <div id="fileUploadBox">
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ፋይሉን ከጋለሪ ይምረጡ *</label>
                         <input type="file" name="media_file" accept="video/*,audio/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-primary hover:file:bg-blue-100 border border-gray-300 rounded-xl p-2">
-                        <span class="text-[10px] text-gray-400 mt-1 block">የተቀረጸ ቪዲዮ ወይም የድምፅ ፋይል ይምረጡ</span>
                     </div>
 
-                    <!-- Written Article Editor -->
                     <div id="articleBox" class="hidden">
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የትምህርቱ ጽሁፍ / ጥናት *</label>
-                        <textarea name="article_body" rows="6" placeholder="የእግዚአብሔርን ቃል፣ የመጽሐፍ ቅዱስ ማብራሪያ እዚህ ይጻፉ..." class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
+                        <textarea name="article_body" rows="6" placeholder="የእግዚአብሔርን ቃል እዚህ ይጻፉ..." class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
                     </div>
 
                     <button type="submit" class="w-full py-3 bg-primary hover:bg-blue-900 text-white font-bold rounded-xl shadow transition">
-                        ይዘቱን አትም (Publish Content)
+                        ይዘቱን አትም (Publish)
                     </button>
                 </form>
             </div>
 
-            <!-- SECTION 3: TWO-WAY LIVE COMMUNICATION (QUESTIONS & COUNSELING) -->
+            <!-- SECTION 3: TWO-WAY VOICE & TEXT COMMUNICATION -->
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-lg font-black text-gray-900 flex items-center space-x-2">
                             <i class="fas fa-comments text-primary"></i>
-                            <span>የሁለትዮሽ ጥያቄና መልስ (Two-Way Communication)</span>
+                            <span>የሁለትዮሽ ጥያቄና መልስ (ድምፅ + ጽሁፍ)</span>
                         </h3>
                         <span class="text-xs font-bold bg-amber-50 text-secondary px-3 py-1 rounded-full border border-amber-200">
                             {{ count($messages) }} ጥያቄዎች
                         </span>
                     </div>
-                    <p class="text-xs text-gray-500 mb-6">ከምዕመናን የቀረቡ ጥያቄዎችን እያዩ መልስ ይስጡ</p>
+                    <p class="text-xs text-gray-500 mb-6">ከምዕመናን የቀረቡትን በድምፅ ወይም በጽሁፍ ያዳምጡ፤ መልስ ይስጡ</p>
 
                     <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                         @forelse($messages as $msg)
@@ -192,20 +176,41 @@
                                     <span class="text-xs font-bold text-primary">{{ $msg->subject }}</span>
                                     <span class="text-[10px] text-gray-400">{{ $msg->created_at }}</span>
                                 </div>
-                                <p class="text-xs text-gray-700 mb-3 bg-white p-3 rounded-xl border border-gray-100">{{ $msg->message }}</p>
 
+                                <!-- የምዕመኑ ጥያቄ (ድምፅ ከሆነ ማጫወቻ ያሳያል) -->
+                                <div class="mb-3 bg-white p-3 rounded-xl border border-gray-100">
+                                    @if(str_starts_with($msg->message, 'AUDIO_VOICE:'))
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-microphone text-rose-500"></i>
+                                            <span class="text-xs font-bold text-gray-700">የምዕመኑ የድምፅ መልእክት፡</span>
+                                        </div>
+                                        <audio controls class="w-full mt-2 h-8">
+                                            <source src="{{ str_replace('AUDIO_VOICE:', '', $msg->message) }}" type="audio/webm">
+                                        </audio>
+                                    @else
+                                        <p class="text-xs text-gray-700">{{ $msg->message }}</p>
+                                    @endif
+                                </div>
+
+                                <!-- የፓስተሩ የቀድሞ መልስ -->
                                 @if($msg->reply)
-                                    <div class="bg-blue-50 p-2.5 rounded-xl text-xs text-primary mb-3">
-                                        <span class="font-bold block text-[10px]">የተሰጠ መልስ:</span>
-                                        {{ $msg->reply }}
+                                    <div class="bg-blue-50 p-3 rounded-xl text-xs text-primary mb-3">
+                                        <span class="font-bold block text-[10px] mb-1">የእርስዎ መልስ፡</span>
+                                        @if(str_starts_with($msg->reply, 'AUDIO_VOICE:'))
+                                            <audio controls class="w-full h-8">
+                                                <source src="{{ str_replace('AUDIO_VOICE:', '', $msg->reply) }}" type="audio/webm">
+                                            </audio>
+                                        @else
+                                            {{ $msg->reply }}
+                                        @endif
                                     </div>
                                 @endif
 
-                                <!-- Reply Form -->
+                                <!-- የፓስተሩ መልስ መስጫ ፎርም -->
                                 <form action="/pastor-desk/{{ $pastor->id }}/reply" method="POST" class="flex gap-2">
                                     @csrf
                                     <input type="hidden" name="message_id" value="{{ $msg->id }}">
-                                    <input type="text" name="reply" required placeholder="መልስ እዚህ ይጻፉ..." class="flex-1 text-xs px-3 py-2 rounded-xl border border-gray-300 outline-none">
+                                    <input type="text" name="reply" placeholder="የምክር መልስዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-3 py-2 rounded-xl border border-gray-300 outline-none">
                                     <button type="submit" class="px-4 py-2 bg-secondary text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition">ላክ</button>
                                 </form>
                             </div>
@@ -221,22 +226,11 @@
         </div>
     </main>
 
-    <!-- Scripts: Camera & Copy Link -->
     <script>
-        // Copy Pastor Portal Link
-        function copyPastorLink() {
-            const linkText = "https://wengel-for-world.vercel.app/p/{{ $pastor->email }}";
-            navigator.clipboard.writeText(linkText).then(() => {
-                const btnText = document.getElementById('copyBtnText');
-                const copyIcon = document.getElementById('copyIcon');
-                
-                btnText.innerText = "ኮፒ ተደርጓል! ✓";
-                copyIcon.className = "fas fa-check";
-                
-                setTimeout(() => {
-                    btnText.innerText = "ሊንኩን ኮፒ አድርግ";
-                    copyIcon.className = "fas fa-copy";
-                }, 3000);
+        function copyLink() {
+            navigator.clipboard.writeText("https://wengel-for-world.vercel.app/p/{{ $pastor->email }}").then(() => {
+                document.getElementById('copyBtnText').innerText = "ኮፒ ተደርጓል! ✓";
+                setTimeout(() => { document.getElementById('copyBtnText').innerText = "ሊንኩን ኮፒ አድርግ"; }, 3000);
             });
         }
 
@@ -263,9 +257,7 @@
                     alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ።");
                 }
             } else {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+                if (stream) { stream.getTracks().forEach(track => track.stop()); }
                 video.classList.add('hidden');
                 placeholder.classList.remove('hidden');
                 badge.classList.add('hidden');
@@ -279,7 +271,6 @@
             const type = document.getElementById('contentTypeSelect').value;
             const fileBox = document.getElementById('fileUploadBox');
             const articleBox = document.getElementById('articleBox');
-
             if (type === 'article') {
                 fileBox.classList.add('hidden');
                 articleBox.classList.remove('hidden');
