@@ -246,3 +246,13 @@
     </script>
 </body>
 </html>
+<!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 px-4 mt-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs">
+            <span>Wengel for World — Super Admin Control Engine</span>
+            <div>
+                System Architecture by <span class="text-amber-400 font-black">Mela Solution</span> | 
+                <span class="font-mono font-bold text-white">📞 0913064239 / 0703064239</span>
+            </div>
+        </div>
+    </footer>
