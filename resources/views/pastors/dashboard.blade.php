@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $pastor->name }} | የአገልጋይ ዳሽቦርድ</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1E3A8A">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -30,11 +33,19 @@
                     <span class="text-xs text-secondary font-bold">{{ $pastor->pastorProfile->church_name ?? 'የወንጌል አገልግሎት' }}</span>
                 </div>
             </div>
-            
-            <a href="/p/{{ $pastor->email }}" target="_blank" class="px-4 py-2 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center space-x-1.5">
-                <i class="fas fa-globe text-[10px]"></i>
-                <span>የምዕመናን ገጽን እይ</span>
-            </a>
+
+            <div class="flex items-center space-x-2">
+                <!-- 📲 PASTOR APP INSTALL BUTTON -->
+                <button id="pastorInstallBtn" onclick="installPastorApp()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center space-x-1.5">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>ዳሽቦርዱን በስልክህ ጫን</span>
+                </button>
+
+                <a href="/p/{{ $pastor->email }}" target="_blank" class="px-3.5 py-1.5 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition hidden sm:flex items-center space-x-1.5">
+                    <i class="fas fa-globe text-[10px]"></i>
+                    <span>የምዕመናን ገጽ</span>
+                </a>
+            </div>
         </div>
     </header>
 
@@ -74,7 +85,7 @@
             </div>
         </div>
 
-        <!-- 💳 የፓስተሩ የአስራትና ስጦታ መቀበያ መረጃዎች (BANK & TELEBIRR SETTINGS) -->
+        <!-- 💳 የፓስተሩ የአስራትና ስጦታ መቀበያ መረጃዎች -->
         <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 mb-8">
             <div class="flex items-center space-x-3 mb-2">
                 <div class="w-10 h-10 rounded-xl bg-amber-100 text-secondary flex items-center justify-center text-lg">
@@ -275,7 +286,32 @@
         </div>
     </footer>
 
+    <!-- Service Worker Registration & PWA Scripts -->
     <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+
+        let pastorPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            pastorPrompt = e;
+            const btn = document.getElementById('pastorInstallBtn');
+            if (btn) btn.classList.add('animate-pulse');
+        });
+
+        function installPastorApp() {
+            if (pastorPrompt) {
+                pastorPrompt.prompt();
+                pastorPrompt.userChoice.then((choice) => {
+                    pastorPrompt = null;
+                });
+            } else {
+                alert('በስልክዎ ብሮውዘር ሜኑ (ሶስት ነጥብ) ውስጥ ገብተው "Add to Home screen" የሚለውን በመጫን እንደ አፕ መጫን ይችላሉ።');
+            }
+        }
+
         function copyLink() {
             navigator.clipboard.writeText("https://wengel-for-world.vercel.app/p/{{ $pastor->email }}").then(() => {
                 document.getElementById('copyBtnText').innerText = "ኮፒ ተደርጓል! ✓";
