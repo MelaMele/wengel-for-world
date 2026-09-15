@@ -60,13 +60,6 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        @if(session('giving_success'))
-            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 flex items-center space-x-3 text-sm font-bold">
-                <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
-                <span>{{ session('giving_success') }}</span>
-            </div>
-        @endif
-
         <!-- 🔴 GLOBAL LIVE VIDEO SCREEN WITH LIVE REACTIONS -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden">
             <div class="flex items-center justify-between mb-4">
@@ -75,7 +68,7 @@
                     <h3 class="text-base font-black text-white">የቀጥታ ስርጭት አገልግሎት (Global Live Stream)</h3>
                 </div>
                 <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold">
-                    🔴 ያልተገደበ የቀጥታ ስርጭት
+                    🔴 የቀጥታ ቪዲዮና ድምፅ
                 </span>
             </div>
 
@@ -90,10 +83,10 @@
                     <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ከስር ባሉት አዝራሮች አሜን ይበሉ!</p>
                 </div>
 
-                <!-- Floating Reactions Display Container -->
+                <!-- Floating Reactions Overlay -->
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-                <!-- Live Reactions Bar (ከስር የሚነኩ አዝራሮች) -->
+                <!-- Live Reactions Bar -->
                 <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
                     <button onclick="sendReaction('🙏', 'አሜን!')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
                     <button onclick="sendReaction('❤️', 'ፍቅር')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
@@ -121,7 +114,7 @@
                     <span class="text-xs text-slate-400 font-mono">{{ $believerPhone }}</span>
                 </div>
 
-                <!-- Messages -->
+                <!-- Messages Area -->
                 <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50" id="chatArea">
                     @forelse($chatMessages as $msg)
                         <!-- የምዕመኑ መልእክት (Right) -->
@@ -244,11 +237,14 @@
         </div>
     </main>
 
-    <!-- 🌟 GIVING / TITHE MODAL (አስራትና ስጦታ መስጫ ሞዳል) -->
+    <!-- 🌟 SIMPLIFIED DIRECT GIVING MODAL (የቀጥታ አካውንት እና ቴሌብር ማሳያ) -->
     <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
-        <div class="bg-gradient-to-r from-amber-600 to-secondary text-white p-6 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <i class="fas fa-hand-holding-heart text-2xl text-amber-200"></i>
+        
+        <div class="bg-gradient-to-r from-amber-600 via-secondary to-amber-700 text-white p-6 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                    <i class="fas fa-hand-holding-heart"></i>
+                </div>
                 <div>
                     <h3 class="font-black text-base">አስራትና ስጦታ መስጫ</h3>
                     <span class="text-xs text-amber-100">ለ {{ $pastor->name }} አገልግሎት</span>
@@ -259,58 +255,89 @@
             </button>
         </div>
 
-        <form action="/p/{{ $pastor->email }}/give" method="POST" class="p-6 space-y-4 bg-white">
-            @csrf
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የስጦታው ዓይነት *</label>
-                <select name="giving_type" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none bg-white">
-                    <option value="tithe">አስራት (Tithe - 10%)</option>
-                    <option value="offering">የፍቅር ስጦታ (Offering)</option>
-                    <option value="partnership">ወርሃዊ አጋርነት (Partnership)</option>
-                    <option value="first_fruit">በኩራት (First Fruit)</option>
-                </select>
-            </div>
+        <div class="p-6 space-y-4 bg-white">
+            <p class="text-xs text-gray-500 leading-relaxed text-center">
+                የሚመችዎትን የክፍያ አማራጭ በመምረጥ የሂሳብ ቁጥሩን ኮፒ አድርገው በባንክ ወይም በቴሌብር መተግበሪያዎ ክፍያውን መፈጸም ይችላሉ።
+            </p>
 
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የገንዘብ መጠን *</label>
-                <input type="number" name="amount" min="10" required placeholder="ለምሳሌ፡ 500" class="w-full text-sm font-bold px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የመክፈያ ዘዴ ይምረጡ *</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
-                        <input type="radio" name="payment_method" value="telebirr" checked class="text-secondary">
-                        <span class="text-xs font-bold text-gray-800">Telebirr</span>
-                    </label>
-                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
-                        <input type="radio" name="payment_method" value="cbe" class="text-secondary">
-                        <span class="text-xs font-bold text-gray-800">CBE Birr</span>
-                    </label>
-                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
-                        <input type="radio" name="payment_method" value="chapa" class="text-secondary">
-                        <span class="text-xs font-bold text-gray-800">Chapa (Cards)</span>
-                    </label>
-                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
-                        <input type="radio" name="payment_method" value="stripe" class="text-secondary">
-                        <span class="text-xs font-bold text-gray-800">ዳያስፖራ (USD)</span>
-                    </label>
+            <!-- Option 1: Telebirr -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-secondary transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-black text-secondary flex items-center space-x-1.5">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>ቴሌብር (Telebirr)</span>
+                    </span>
+                    <span class="text-[10px] text-gray-400 font-medium">በስልክ ቁጥር</span>
                 </div>
+                <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
+                    <span class="font-mono font-bold text-sm text-gray-800" id="telebirrNum">{{ $pastor->phone }}</span>
+                    <button onclick="copyToClipboard('telebirrNum', this)" class="px-3 py-1.5 bg-secondary text-white text-[11px] font-bold rounded-lg hover:bg-amber-600 transition flex items-center space-x-1">
+                        <i class="fas fa-copy text-[10px]"></i>
+                        <span>ኮፒ</span>
+                    </button>
+                </div>
+                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->name }}</strong></span>
             </div>
 
-            <button type="submit" class="w-full py-3.5 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2 mt-2">
-                <i class="fas fa-lock text-[10px]"></i>
-                <span>ክፍያውን ፈጽም</span>
+            <!-- Option 2: Commercial Bank of Ethiopia (CBE) -->
+            <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-primary transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-black text-primary flex items-center space-x-1.5">
+                        <i class="fas fa-university"></i>
+                        <span>የኢትዮጵያ ንግድ ባንክ (CBE)</span>
+                    </span>
+                    <span class="text-[10px] text-gray-400 font-medium">የባንክ ሂሳብ</span>
+                </div>
+                <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
+                    <span class="font-mono font-bold text-sm text-gray-800" id="cbeNum">1000123456789</span>
+                    <button onclick="copyToClipboard('cbeNum', this)" class="px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-blue-900 transition flex items-center space-x-1">
+                        <i class="fas fa-copy text-[10px]"></i>
+                        <span>ኮፒ</span>
+                    </button>
+                </div>
+                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->church_name ?? $pastor->name }}</strong></span>
+            </div>
+
+            <!-- Scripture Blessing Quote -->
+            <div class="bg-amber-50 rounded-2xl p-4 text-center border border-amber-200/60">
+                <p class="text-xs text-amber-900 italic">
+                    "እግዚአብሔር በደስታ የሚሰጠውን ይወዳልና እያንዳንዱ በልቡ እንዳሰበ ይስጥ።" (2ኛ ቆሮንቶስ 9:7)
+                </p>
+            </div>
+
+            <button onclick="document.getElementById('givingModal').close()" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-gray-800 font-bold text-xs rounded-xl transition">
+                ዝጋ
             </button>
-        </form>
+        </div>
     </dialog>
 
-    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        &copy; 2024 Wengel for World. Powered by Mela Solution.
+    <!-- 🌟 Footer with Mela Solution Branding -->
+    <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-8">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <span class="text-xs text-gray-500">&copy; 2024 Wengel for World. All rights reserved.</span>
+            <div class="text-xs text-gray-600 font-medium">
+                Developed by <span class="text-primary font-black">Mela Solution</span> | 
+                <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
+            </div>
+        </div>
     </footer>
 
-    <!-- Scripts: Live Floating Reactions & Audio Recording -->
+    <!-- Scripts: Live Floating Reactions, Audio Recording & Copy Helper -->
     <script>
+        function copyToClipboard(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-[10px]"></i> <span>ኮፒ ሆኗል!</span>';
+                btn.classList.add('bg-emerald-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('bg-emerald-600');
+                }, 2500);
+            });
+        }
+
         function sendReaction(emoji, text) {
             const overlay = document.getElementById('reactionsOverlay');
             const el = document.createElement('div');
@@ -366,16 +393,5 @@
             }
         }
     </script>
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-8">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <span class="text-xs text-gray-500">&copy; 2026 Wengel for World. All rights reserved.</span>
-            <div class="text-xs text-gray-600 font-medium">
-                Developed by <span class="text-primary font-black">Mela Solution</span> | 
-                <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
-            </div>
-        </div>
-    </footer>
 </body>
 </html>
-
