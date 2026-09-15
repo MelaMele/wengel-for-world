@@ -74,6 +74,47 @@
             </div>
         </div>
 
+        <!-- 💳 የፓስተሩ የአስራትና ስጦታ መቀበያ መረጃዎች (BANK & TELEBIRR SETTINGS) -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-200 mb-8">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-secondary flex items-center justify-center text-lg">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900">የአስራት እና ስጦታ መቀበያ የባንክ መረጃዎች</h3>
+                    <p class="text-xs text-gray-500">ምዕመናን ስጦታ ሲልኩ የሚመለከቱትን የቴሌብር እና የባንክ ቁጥሮች እዚህ ያስገቡ</p>
+                </div>
+            </div>
+
+            <form action="/pastor-desk/{{ $pastor->id }}/update-accounts" method="POST" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                @csrf
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ቴሌብር ቁጥር</label>
+                    <input type="text" name="telebirr_no" value="{{ $pastor->pastorProfile->telebirr_no ?? $pastor->phone }}" placeholder="0911..." class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ንግድ ባንክ (CBE) ቁጥር</label>
+                    <input type="text" name="cbe_account" value="{{ $pastor->pastorProfile->cbe_account ?? '' }}" placeholder="1000..." class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">አዋሽ ባንክ ቁጥር</label>
+                    <input type="text" name="awash_account" value="{{ $pastor->pastorProfile->awash_account ?? '' }}" placeholder="0132..." class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የአካውንቱ ስም</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="account_holder_name" value="{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}" placeholder="ሙሉ ስም" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
+                        <button type="submit" class="px-4 py-2.5 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow transition whitespace-nowrap">
+                            መዝግብ
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
         <!-- SECTION 1: LIVE VIDEO & AUDIO BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -177,7 +218,6 @@
                                     <span class="text-[10px] text-gray-400">{{ $msg->created_at }}</span>
                                 </div>
 
-                                <!-- የምዕመኑ ጥያቄ (ድምፅ ከሆነ ማጫወቻ ያሳያል) -->
                                 <div class="mb-3 bg-white p-3 rounded-xl border border-gray-100">
                                     @if(str_starts_with($msg->message, 'AUDIO_VOICE:'))
                                         <div class="flex items-center space-x-2">
@@ -192,7 +232,6 @@
                                     @endif
                                 </div>
 
-                                <!-- የፓስተሩ የቀድሞ መልስ -->
                                 @if($msg->reply)
                                     <div class="bg-blue-50 p-3 rounded-xl text-xs text-primary mb-3">
                                         <span class="font-bold block text-[10px] mb-1">የእርስዎ መልስ፡</span>
@@ -206,7 +245,6 @@
                                     </div>
                                 @endif
 
-                                <!-- የፓስተሩ መልስ መስጫ ፎርም -->
                                 <form action="/pastor-desk/{{ $pastor->id }}/reply" method="POST" class="flex gap-2">
                                     @csrf
                                     <input type="hidden" name="message_id" value="{{ $msg->id }}">
@@ -225,6 +263,17 @@
 
         </div>
     </main>
+
+    <!-- 🌟 Footer with Mela Solution Branding -->
+    <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <span class="text-xs text-gray-500">Wengel for World — የአገልጋዮች የስራ ማዕከል</span>
+            <div class="text-xs text-gray-600 font-medium">
+                የሲስተም አጋር፡ <span class="text-primary font-black">Mela Solution</span> | 
+                <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
+            </div>
+        </div>
+    </footer>
 
     <script>
         function copyLink() {
@@ -280,16 +329,5 @@
             }
         }
     </script>
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-12">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <span class="text-xs text-gray-500">Wengel for World — የአገልጋዮች የስራ ማዕከል</span>
-            <div class="text-xs text-gray-600 font-medium">
-                የሲስተም አጋር፡ <span class="text-primary font-black">Mela Solution</span> | 
-                <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
-            </div>
-        </div>
-    </footer>
 </body>
 </html>
-
