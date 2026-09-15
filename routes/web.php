@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የምዕመናን ፖርታል (Live + Chat + Giving)
+// 1. የምዕመናን ፖርታል (የፓስተሩን ግላዊ አካውንቶች ያሳያል)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -55,9 +55,7 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
         ->orderBy('created_at', 'asc')
         ->get();
 
-    $donationsTotal = DB::table('donations')->where('pastor_id', $pastor->id)->where('status', 'success')->sum('amount');
-
-    return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone', 'donationsTotal'));
+    return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
 })->name('pastor.portal');
 
 Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
@@ -113,49 +111,16 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
-// 2. አስራትና ስጦታ መላኪያ (Giving / Tithe Processing)
-Route::post('/p/{slug}/give', function (Request $request, $slug) {
-    $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
-        $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
-    })->firstOrFail();
-
-    $request->validate([
-        'amount' => 'required|numeric|min:10',
-        'giving_type' => 'required',
-        'payment_method' => 'required',
-    ]);
-
-    $believerName = session('believer_name_' . $pastor->id) ?? 'ስሙ ያልተጠቀሰ ምዕመን';
-
-    DB::table('donations')->insert([
-        'pastor_id' => $pastor->id,
-        'user_id' => 1,
-        'amount' => $request->amount,
-        'currency' => $request->payment_method == 'stripe' ? 'USD' : 'ETB',
-        'type' => $request->giving_type,
-        'payment_method' => $request->payment_method,
-        'transaction_reference' => 'WENGEL-' . strtoupper(uniqid()),
-        'status' => 'success',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    return back()->with('giving_success', 'የ ' . number_format($request->amount) . ' ብር አስራት/ስጦታዎ በተሳካ ሁኔታ ተቀባይነት አግኝቷል። እግዚአብሔር አብዝቶ ይባርክዎት!');
-});
-
-// 3. ሱፐር አድሚን ዳሽቦርድ
+// 2. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     foreach ($pastors as $p) {
         $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
         $p->believers_count = count($p->believers_list);
-        $p->total_given = DB::table('donations')->where('pastor_id', $p->id)->where('status', 'success')->sum('amount');
     }
     $totalBelievers = DB::table('believers')->count();
     $teachingsCount = DB::table('teachings')->count();
-    $grandTotalGiving = DB::table('donations')->where('status', 'success')->sum('amount');
-
-    return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount', 'grandTotalGiving'));
+    return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount'));
 })->name('admin.dashboard');
 
 Route::post('/super-admin/generate-pastor', function (Request $request) {
@@ -181,12 +146,11 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     DB::table('teachings')->where('pastor_id', $id)->delete();
     DB::table('counseling_messages')->where('pastor_id', $id)->delete();
     DB::table('believers')->where('pastor_id', $id)->delete();
-    DB::table('donations')->where('pastor_id', $id)->delete();
     DB::table('users')->where('id', $id)->delete();
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
 });
 
-// 4. የፓስተሩ ዳሽቦርድ (ስጦታዎችና የተሰበሰበ አስራት ማሳያ)
+// 3. የፓስተሩ ዳሽቦርድ (የባንክና የቴሌብር መረጃዎችን እዚህ ይሞላል)
 Route::get('/pastor-desk/{id}', function ($id) {
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
     if (!$pastor->is_verified) return view('pastors.dashboard-locked', compact('pastor'));
@@ -194,11 +158,29 @@ Route::get('/pastor-desk/{id}', function ($id) {
     $messages = DB::table('counseling_messages')->where('pastor_id', $id)->orderByDesc('created_at')->get();
     $teachings = Teaching::where('pastor_id', $id)->latest()->get();
     $believers = DB::table('believers')->where('pastor_id', $id)->orderByDesc('created_at')->get();
-    $donations = DB::table('donations')->where('pastor_id', $id)->orderByDesc('created_at')->get();
-    $totalRaised = DB::table('donations')->where('pastor_id', $id)->where('status', 'success')->sum('amount');
 
-    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers', 'donations', 'totalRaised'));
+    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers'));
 })->name('pastor.dashboard');
+
+// ፓስተሩ የራሱን የባንክ እና የቴሌብር መረጃ ማዘመኛ
+Route::post('/pastor-desk/{id}/update-accounts', function (Request $request, $id) {
+    $request->validate([
+        'telebirr_no' => 'nullable|string',
+        'cbe_account' => 'nullable|string',
+        'awash_account' => 'nullable|string',
+        'account_holder_name' => 'nullable|string',
+    ]);
+
+    DB::table('pastor_profiles')->where('user_id', $id)->update([
+        'telebirr_no' => $request->telebirr_no,
+        'cbe_account' => $request->cbe_account,
+        'awash_account' => $request->awash_account,
+        'account_holder_name' => $request->account_holder_name,
+        'updated_at' => now(),
+    ]);
+
+    return back()->with('success', 'የአስራት እና ስጦታ መቀበያ የባንክ መረጃዎችዎ በተሳካ ሁኔታ ተመዝግበዋል!');
+});
 
 Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
     $pastor = User::findOrFail($id);
@@ -236,23 +218,15 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
 
-// የ Donations ቴብል መፍጠሪያ (1 ጊዜ ብቻ የሚነካ)
-Route::get('/setup-donations-table', function () {
-    DB::statement("CREATE TABLE IF NOT EXISTS `donations` (
-      `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-      `pastor_id` bigint(20) UNSIGNED NOT NULL,
-      `user_id` bigint(20) UNSIGNED DEFAULT 1,
-      `amount` decimal(10,2) NOT NULL,
-      `currency` varchar(10) NOT NULL DEFAULT 'ETB',
-      `type` varchar(50) NOT NULL DEFAULT 'offering',
-      `payment_method` varchar(50) NOT NULL DEFAULT 'telebirr',
-      `transaction_reference` varchar(100) NOT NULL,
-      `status` enum('pending','success','failed') NOT NULL DEFAULT 'success',
-      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-      `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`),
-      FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-    return "<h2 style='color:green;'>✅ Donations Table Created! <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
+// አዳዲሶቹን የባንክ አምዶች በዳታቤዝ ውስጥ ማካተቻ (1 ጊዜ ብቻ የሚነካ)
+Route::get('/setup-bank-columns', function () {
+    try {
+        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `telebirr_no` VARCHAR(50) NULL;");
+        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `cbe_account` VARCHAR(100) NULL;");
+        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `awash_account` VARCHAR(100) NULL;");
+        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255) NULL;");
+        return "<h2 style='color:green;'>✅ የባንክና ቴሌብር አምዶች ተጨምረዋል! <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
+    } catch (\Exception $e) {
+        return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
+    }
 });
