@@ -9,8 +9,30 @@ use App\Models\Teaching;
 use App\Models\Category;
 use App\Models\User;
 
+// 🧹 ራስ-ሰር የድምፅ ማጽጃ ሞተር (AUTO-CLEANER)
+// ማንኛውም ሰው ገጹን በከፈተ ቁጥር ከ 2 ቀን (48 ሰዓት) በላይ የሆናቸውን ትላልቅ የድምፅ ፋይሎች ዳታቤዙን እንዳይሞሉ በራሱ ያጸዳቸዋል!
+function purgeOldVoiceNotes() {
+    try {
+        DB::table('counseling_messages')
+            ->where('created_at', '<', now()->subDays(2))
+            ->where('message', 'like', 'AUDIO_VOICE:%')
+            ->update(['message' => '🎤 [የድምፅ መልእክት - ከ 2 ቀን በላይ ስለሆነው በሲስተሙ ተጠርጓል]']);
+
+        DB::table('counseling_messages')
+            ->where('updated_at', '<', now()->subDays(2))
+            ->where('reply', 'like', 'AUDIO_VOICE:%')
+            ->update(['reply' => '🎤 [የፓስተሩ የድምፅ መልስ - ከ 2 ቀን በላይ ስለሆነው በሲስተሙ ተጠርጓል]']);
+    } catch (\Exception $e) {
+        // ዝም ብሎ ያልፋል
+    }
+}
+
 // ዋና ገጾች
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', function () {
+    purgeOldVoiceNotes();
+    return app(HomeController::class)->index();
+})->name('home');
+
 Route::get('/prayer-requests', [HomeController::class, 'prayerIndex'])->name('prayer.index');
 Route::post('/prayer-requests', [HomeController::class, 'prayerStore'])->name('prayer.store');
 
@@ -31,6 +53,8 @@ Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.sh
 
 // 1. የምዕመናን ፖርታል (የፓስተሩን ግላዊ አካውንቶች ያሳያል)
 Route::get('/p/{slug}', function (Request $request, $slug) {
+    purgeOldVoiceNotes(); // የቆዩ ድምፆችን ያጸዳል
+
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
             $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
@@ -85,6 +109,8 @@ Route::get('/p/{slug}/believer-logout', function ($slug) {
 });
 
 Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
+    purgeOldVoiceNotes();
+
     $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
         $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
     })->firstOrFail();
@@ -113,6 +139,8 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
 
 // 2. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
+    purgeOldVoiceNotes();
+
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     foreach ($pastors as $p) {
         $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
@@ -150,8 +178,10 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
 });
 
-// 3. የፓስተሩ ዳሽቦርድ (የባንክና የቴሌብር መረጃዎችን እዚህ ይሞላል)
+// 3. የፓስተሩ ዳሽቦርድ
 Route::get('/pastor-desk/{id}', function ($id) {
+    purgeOldVoiceNotes(); // የቆዩ ድምፆችን ያጸዳል
+
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
     if (!$pastor->is_verified) return view('pastors.dashboard-locked', compact('pastor'));
 
@@ -162,7 +192,6 @@ Route::get('/pastor-desk/{id}', function ($id) {
     return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers'));
 })->name('pastor.dashboard');
 
-// ፓስተሩ የራሱን የባንክ እና የቴሌብር መረጃ ማዘመኛ
 Route::post('/pastor-desk/{id}/update-accounts', function (Request $request, $id) {
     $request->validate([
         'telebirr_no' => 'nullable|string',
@@ -204,6 +233,8 @@ Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id)
 });
 
 Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
+    purgeOldVoiceNotes();
+
     $pastor = User::findOrFail($id);
     if (!$pastor->is_verified) return back()->with('error', 'አካውንትዎ ታግዷል');
 
@@ -216,24 +247,4 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
         'reply' => $replyContent, 'status' => 'answered', 'updated_at' => now(),
     ]);
     return back()->with('success', 'መልስዎ ተልኳል!');
-});
-
-// አዳዲሶቹን የባንክ አምዶች በዳታቤዝ ውስጥ ማካተቻ
-Route::get('/setup-bank-columns', function () {
-    try {
-        // አምዶቹ መኖራቸውን በደህና መንገድ ፈትሾ ማከል
-        $columns = ['telebirr_no', 'cbe_account', 'awash_account', 'account_holder_name'];
-        
-        foreach ($columns as $col) {
-            try {
-                DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN `{$col}` VARCHAR(255) NULL;");
-            } catch (\Exception $e) {
-                // ቀድሞ ካለ ችግር የለውም ዝለለው
-            }
-        }
-
-        return "<h2 style='color:green;font-family:sans-serif;'>✅ የባንክና ቴሌብር አምዶች በተሳካ ሁኔታ ተጨምረዋል! <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
-    } catch (\Exception $e) {
-        return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
-    }
 });
