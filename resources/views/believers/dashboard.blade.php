@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $believerName }} | የወንጌል ዳሽቦርድ</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1E3A8A">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -40,16 +44,22 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <!-- Giving / Tithe Button -->
-                <button onclick="document.getElementById('givingModal').showModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black rounded-xl shadow-md transition flex items-center space-x-1.5 animate-pulse">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- 📲 PWA INSTALL APP BUTTON -->
+                <button id="installAppBtn" onclick="installApp()" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition items-center space-x-1.5 animate-bounce">
+                    <i class="fas fa-download text-[10px]"></i>
+                    <span>አፑን ጫን</span>
+                </button>
+
+                <!-- Giving Button -->
+                <button onclick="document.getElementById('givingModal').showModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black rounded-xl shadow-md transition flex items-center space-x-1.5">
                     <i class="fas fa-hand-holding-heart"></i>
-                    <span>አስራት / ስጦታ ስጥ</span>
+                    <span>ስጦታ ስጥ</span>
                 </button>
 
                 <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
                     <i class="fas fa-user-circle text-secondary"></i>
-                    <span class="font-bold">{{ $believerName }}</span>
+                    <span class="font-bold hidden sm:inline">{{ $believerName }}</span>
                     <a href="/p/{{ $pastor->email }}/believer-logout" class="text-rose-400 hover:underline ml-1" title="ውጣ">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
@@ -60,29 +70,41 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN -->
-        <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden">
+        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN WITH FULLSCREEN BUTTON -->
+        <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
                     <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
-                    <h3 class="text-base font-black text-white">የቀጥታ ስርጭት አገልግሎት (Global Live Stream)</h3>
+                    <h3 class="text-base font-black text-white">የቀጥታ ስርጭት አገልግሎት (Live Stream)</h3>
                 </div>
-                <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold">
-                    🔴 የቀጥታ ቪዲዮና ድምፅ
-                </span>
+                
+                <div class="flex items-center space-x-2">
+                    <!-- ⛶ FULLSCREEN BUTTON -->
+                    <button onclick="toggleFullscreen()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5 transition" title="ስክሪኑን አሳድግ">
+                        <i class="fas fa-expand text-amber-400" id="fsIcon"></i>
+                        <span id="fsText">ሙሉ ስክሪን</span>
+                    </button>
+
+                    <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold hidden sm:inline">
+                        🔴 LIVE
+                    </span>
+                </div>
             </div>
 
-            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoContainer">
+            <!-- Video Frame -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
                 <div class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
                     <h4 class="text-base font-bold text-slate-200 mb-1">ዓለም አቀፍ የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ከስር ባሉት አዝራሮች አሜን ይበሉ!</p>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ሙሉ ስክሪን አድርገው መከታተል ይችላሉ።</p>
                 </div>
 
+                <!-- Floating Reactions Overlay -->
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
+                <!-- Live Reactions Bar -->
                 <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
                     <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
                     <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
@@ -229,9 +251,8 @@
         </div>
     </main>
 
-    <!-- 🌟 DYNAMIC GIVING MODAL (የፓስተሩ የራሱ ቴሌብርና ባንክ ማሳያ) -->
+    <!-- 🌟 GIVING MODAL -->
     <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
-        
         <div class="bg-gradient-to-r from-amber-600 via-secondary to-amber-700 text-white p-6 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
@@ -252,7 +273,7 @@
                 የሚመችዎትን የክፍያ አማራጭ በመምረጥ የሂሳብ ቁጥሩን ኮፒ አድርገው በባንክ ወይም በቴሌብር መተግበሪያዎ ክፍያውን መፈጸም ይችላሉ።
             </p>
 
-            <!-- Option 1: Telebirr (የዚህ ፓስተር የራሱ ቴሌብር) -->
+            <!-- Option 1: Telebirr -->
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-secondary transition">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-black text-secondary flex items-center space-x-1.5">
@@ -271,7 +292,7 @@
                 <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
             </div>
 
-            <!-- Option 2: CBE (የዚህ ፓስተር የራሱ CBE) -->
+            <!-- Option 2: CBE -->
             @if(!empty($pastor->pastorProfile->cbe_account))
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-primary transition">
                 <div class="flex items-center justify-between mb-2">
@@ -292,7 +313,7 @@
             </div>
             @endif
 
-            <!-- Option 3: Awash (የዚህ ፓስተር የራሱ Awash) -->
+            <!-- Option 3: Awash -->
             @if(!empty($pastor->pastorProfile->awash_account))
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-blue-500 transition">
                 <div class="flex items-center justify-between mb-2">
@@ -313,12 +334,6 @@
             </div>
             @endif
 
-            <div class="bg-amber-50 rounded-2xl p-4 text-center border border-amber-200/60">
-                <p class="text-xs text-amber-900 italic">
-                    "እግዚአብሔር በደስታ የሚሰጠውን ይወዳልና እያንዳንዱ በልቡ እንዳሰበ ይስጥ።" (2ኛ ቆሮንቶስ 9:7)
-                </p>
-            </div>
-
             <button onclick="document.getElementById('givingModal').close()" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-gray-800 font-bold text-xs rounded-xl transition">
                 ዝጋ
             </button>
@@ -336,8 +351,53 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- Scripts: Fullscreen, PWA Install, Audio Recording & Reactions -->
     <script>
+        // ⛶ FULLSCREEN TOGGLE
+        function toggleFullscreen() {
+            const videoBox = document.getElementById('videoBox');
+            const fsText = document.getElementById('fsText');
+            const fsIcon = document.getElementById('fsIcon');
+
+            if (!document.fullscreenElement) {
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen();
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
+                }
+                fsText.innerText = "አሳንስ";
+                fsIcon.className = "fas fa-compress text-amber-400";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fsText.innerText = "ሙሉ ስክሪን";
+                fsIcon.className = "fas fa-expand text-amber-400";
+            }
+        }
+
+        // 📲 PWA INSTALL PROMPT
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        document.getElementById('installAppBtn').classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
         function copyToClipboard(elementId, btn) {
             const text = document.getElementById(elementId).innerText;
             navigator.clipboard.writeText(text).then(() => {
