@@ -15,6 +15,15 @@
             }
         }
     </script>
+    <style>
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(-120px) scale(1.4); opacity: 0; }
+        }
+        .animate-float {
+            animation: floatUp 1.8s ease-out forwards;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
 
@@ -31,44 +40,72 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-                <i class="fas fa-user-circle text-secondary"></i>
-                <span class="font-bold">{{ $believerName }}</span>
-                <a href="/p/{{ $pastor->email }}/believer-logout" class="text-rose-400 hover:underline ml-1" title="ውጣ">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
+            <div class="flex items-center space-x-3">
+                <!-- Giving / Tithe Button -->
+                <button onclick="document.getElementById('givingModal').showModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black rounded-xl shadow-md transition flex items-center space-x-1.5 animate-pulse">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <span>አስራት / ስጦታ ስጥ</span>
+                </button>
+
+                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+                    <i class="fas fa-user-circle text-secondary"></i>
+                    <span class="font-bold">{{ $believerName }}</span>
+                    <a href="/p/{{ $pastor->email }}/believer-logout" class="text-rose-400 hover:underline ml-1" title="ውጣ">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 የቀጥታ ስርጭት ስክሪን -->
-        <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl">
+        @if(session('giving_success'))
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 flex items-center space-x-3 text-sm font-bold">
+                <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
+                <span>{{ session('giving_success') }}</span>
+            </div>
+        @endif
+
+        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN WITH LIVE REACTIONS -->
+        <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
                     <span class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>
-                    <h3 class="text-base font-black text-white">የቀጥታ ስርጭት አገልግሎት (Live Stream)</h3>
+                    <h3 class="text-base font-black text-white">የቀጥታ ስርጭት አገልግሎት (Global Live Stream)</h3>
                 </div>
                 <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold">
-                    🔴 የቀጥታ ቪዲዮና ድምፅ
+                    🔴 ያልተገደበ የቀጥታ ስርጭት
                 </span>
             </div>
 
-            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner">
+            <!-- Video Frame -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoContainer">
+                
                 <div class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
-                    <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ ከዳሽቦርዳቸው የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታዩዎታል እና ይደመጣሉ።</p>
+                    <h4 class="text-base font-bold text-slate-200 mb-1">ዓለም አቀፍ የቀጥታ ስርጭት መድረክ</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ከስር ባሉት አዝራሮች አሜን ይበሉ!</p>
+                </div>
+
+                <!-- Floating Reactions Display Container -->
+                <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+                <!-- Live Reactions Bar (ከስር የሚነኩ አዝራሮች) -->
+                <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
+                    <button onclick="sendReaction('🙏', 'አሜን!')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
+                    <button onclick="sendReaction('❤️', 'ፍቅር')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
+                    <button onclick="sendReaction('🔥', 'እሳት ነው!')" class="hover:scale-125 transition text-lg" title="እሳት">🔥</button>
+                    <button onclick="sendReaction('🙌', 'ሀሌሉያ')" class="hover:scale-125 transition text-lg" title="ሀሌሉያ">🙌</button>
                 </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- 💬 ዘመናዊ የውይይት መስኮት (ድምፅ + ጽሁፍ) -->
+            <!-- 💬 TWO-WAY VOICE & TEXT CHAT -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[550px]">
                 
                 <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
@@ -84,12 +121,12 @@
                     <span class="text-xs text-slate-400 font-mono">{{ $believerPhone }}</span>
                 </div>
 
-                <!-- Messages Area -->
+                <!-- Messages -->
                 <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50" id="chatArea">
                     @forelse($chatMessages as $msg)
                         <!-- የምዕመኑ መልእክት (Right) -->
                         <div class="flex flex-col items-end">
-                            <div class="bg-primary text-white p-3 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
+                            <div class="bg-primary text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
                                 @if(str_starts_with($msg->message, 'AUDIO_VOICE:'))
                                     <div class="flex items-center space-x-2 py-1">
                                         <i class="fas fa-microphone text-amber-300 text-sm"></i>
@@ -139,22 +176,19 @@
                     @endforelse
                 </div>
 
-                <!-- Input Area (ጽሁፍ + የማይክሮፎን ድምፅ መቅረጫ) -->
+                <!-- Input Area (ጽሁፍ + ማይክሮፎን) -->
                 <div class="p-3 bg-white border-t border-gray-200">
                     <form id="msgForm" action="/p/{{ $pastor->email }}/send-message" method="POST" class="flex items-center space-x-2">
                         @csrf
                         <input type="hidden" name="voice_data" id="voiceDataInput">
-                        
                         <input type="text" name="message" id="textInput" placeholder="ጥያቄዎን እዚህ ይጻፉ..." class="flex-1 text-xs px-4 py-3 rounded-2xl border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
                         
-                        <!-- 🎙️ Voice Record Button -->
-                        <button type="button" id="recordBtn" onclick="toggleRecording()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition" title="ድምፅ ለመቅረጽ ይጫኑ">
+                        <button type="button" id="recordBtn" onclick="toggleRecording()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition" title="ድምፅ ለመቅረጽ">
                             <i class="fas fa-microphone text-sm" id="micIcon"></i>
                         </button>
 
-                        <button type="submit" id="sendBtn" class="px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow transition flex items-center space-x-1">
-                            <span>ላክ</span>
-                            <i class="fas fa-paper-plane text-[10px]"></i>
+                        <button type="submit" id="sendBtn" class="px-5 py-3 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow transition">
+                            <i class="fas fa-paper-plane"></i>
                         </button>
                     </form>
                     <span id="recordStatus" class="text-[10px] text-rose-600 hidden font-bold mt-1 animate-pulse">● ድምፅ እየተቀረጸ ነው... ለማቆምና ለመላክ ድጋሚ ማይኩን ይጫኑ</span>
@@ -210,8 +244,85 @@
         </div>
     </main>
 
-    <!-- Audio Recording Script -->
+    <!-- 🌟 GIVING / TITHE MODAL (አስራትና ስጦታ መስጫ ሞዳል) -->
+    <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
+        <div class="bg-gradient-to-r from-amber-600 to-secondary text-white p-6 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-hand-holding-heart text-2xl text-amber-200"></i>
+                <div>
+                    <h3 class="font-black text-base">አስራትና ስጦታ መስጫ</h3>
+                    <span class="text-xs text-amber-100">ለ {{ $pastor->name }} አገልግሎት</span>
+                </div>
+            </div>
+            <button onclick="document.getElementById('givingModal').close()" class="text-white hover:text-amber-200 text-2xl font-bold">
+                &times;
+            </button>
+        </div>
+
+        <form action="/p/{{ $pastor->email }}/give" method="POST" class="p-6 space-y-4 bg-white">
+            @csrf
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የስጦታው ዓይነት *</label>
+                <select name="giving_type" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none bg-white">
+                    <option value="tithe">አስራት (Tithe - 10%)</option>
+                    <option value="offering">የፍቅር ስጦታ (Offering)</option>
+                    <option value="partnership">ወርሃዊ አጋርነት (Partnership)</option>
+                    <option value="first_fruit">በኩራት (First Fruit)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የገንዘብ መጠን *</label>
+                <input type="number" name="amount" min="10" required placeholder="ለምሳሌ፡ 500" class="w-full text-sm font-bold px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-secondary outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">የመክፈያ ዘዴ ይምረጡ *</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
+                        <input type="radio" name="payment_method" value="telebirr" checked class="text-secondary">
+                        <span class="text-xs font-bold text-gray-800">Telebirr</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
+                        <input type="radio" name="payment_method" value="cbe" class="text-secondary">
+                        <span class="text-xs font-bold text-gray-800">CBE Birr</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
+                        <input type="radio" name="payment_method" value="chapa" class="text-secondary">
+                        <span class="text-xs font-bold text-gray-800">Chapa (Cards)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-amber-50">
+                        <input type="radio" name="payment_method" value="stripe" class="text-secondary">
+                        <span class="text-xs font-bold text-gray-800">ዳያስፖራ (USD)</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 bg-secondary hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2 mt-2">
+                <i class="fas fa-lock text-[10px]"></i>
+                <span>ክፍያውን ፈጽም</span>
+            </button>
+        </form>
+    </dialog>
+
+    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
+        &copy; 2024 Wengel for World. Powered by Mela Solution.
+    </footer>
+
+    <!-- Scripts: Live Floating Reactions & Audio Recording -->
     <script>
+        function sendReaction(emoji, text) {
+            const overlay = document.getElementById('reactionsOverlay');
+            const el = document.createElement('div');
+            el.className = 'absolute text-3xl animate-float select-none';
+            el.style.left = (Math.random() * 80 + 10) + '%';
+            el.style.bottom = '20px';
+            el.innerHTML = emoji;
+            overlay.appendChild(el);
+
+            setTimeout(() => { el.remove(); }, 1800);
+        }
+
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
@@ -227,11 +338,7 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
-
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                         const reader = new FileReader();
@@ -239,25 +346,22 @@
                         reader.onloadend = () => {
                             document.getElementById('voiceDataInput').value = reader.result;
                             document.getElementById('textInput').removeAttribute('required');
-                            form.submit(); // ወዲያውኑ ድምፁን ይልካል
+                            form.submit();
                         };
                     };
-
                     mediaRecorder.start();
                     isRecording = true;
                     btn.classList.add('bg-rose-600', 'text-white');
-                    icon.classList.remove('fa-microphone');
-                    icon.classList.add('fa-stop');
+                    icon.className = 'fas fa-stop text-sm';
                     status.classList.remove('hidden');
                 } catch (err) {
-                    alert('ማይክሮፎን መክፈት አልተቻለም፡ እባክዎ ፈቃድ ይስጡ።');
-        }
+                    alert('ማይክሮፎን መክፈት አልተቻለም');
+                }
             } else {
                 mediaRecorder.stop();
                 isRecording = false;
                 btn.classList.remove('bg-rose-600', 'text-white');
-                icon.classList.remove('fa-stop');
-                icon.classList.add('fa-microphone');
+                icon.className = 'fas fa-microphone text-sm';
                 status.classList.add('hidden');
             }
         }
