@@ -126,11 +126,12 @@
             </form>
         </div>
 
-        <!-- SECTION 1: LIVE VIDEO & AUDIO BROADCAST SCREEN -->
+        <!-- SECTION 1: LIVE VIDEO & AUDIO BROADCAST SCREEN WITH FULLSCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 
-                <div class="w-full md:w-2/3 bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border-2 border-slate-700 shadow-inner">
+                <!-- Video Camera Frame -->
+                <div class="w-full md:w-2/3 bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border-2 border-slate-700 shadow-inner" id="pastorVideoBox">
                     <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
                     
                     <div id="videoPlaceholder" class="text-center p-6">
@@ -141,18 +142,26 @@
                         <p class="text-xs text-slate-500 max-w-sm mx-auto">ካሜራዎንና ማይክሮፎንዎን ከፍተው ለምዕመናን በቀጥታ ፊት ለፊት ያስተምሩ እና ይጸልዩ።</p>
                     </div>
 
-                    <div id="liveBadge" class="absolute top-4 left-4 bg-rose-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full hidden items-center space-x-1 animate-pulse">
+                    <!-- ⛶ FULLSCREEN BUTTON FOR PASTOR -->
+                    <button onclick="togglePastorFullscreen()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-1.5 transition z-20 backdrop-blur" title="ስክሪኑን አሳድግ">
+                        <i class="fas fa-expand text-amber-400" id="pastorFsIcon"></i>
+                        <span id="pastorFsText">ሙሉ ስክሪን</span>
+                    </button>
+
+                    <!-- Live Indicator Badge -->
+                    <div id="liveBadge" class="absolute top-4 left-4 bg-rose-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full hidden items-center space-x-1 animate-pulse z-20">
                         <span class="w-2 h-2 rounded-full bg-white"></span>
                         <span>🔴 በቀጥታ ስርጭት ላይ (LIVE)</span>
                     </div>
                 </div>
 
+                <!-- Live Control Panel -->
                 <div class="w-full md:w-1/3 flex flex-col justify-between space-y-4">
                     <div>
                         <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-1">ቀጥታ አገልግሎት</span>
                         <h3 class="text-xl font-black mb-2">የቪዲዮና ድምፅ ስርጭት ይጀምሩ</h3>
                         <p class="text-xs text-slate-400 leading-relaxed mb-6">
-                            አዝራሩን ሲጫኑ ካሜራዎ ይከፈታል፤ ምዕመናን ወዲያውኑ ሊያዩዎትና ሊሰሙዎት ይችላሉ።
+                            አዝራሩን ሲጫኑ ካሜራዎ ይከፈታል፤ ምዕመናን ወዲያውኑ ሊያዩዎትና ሊሰሙዎት ይችላሉ። ሙሉ ስክሪን በማድረግም በትልቁ መከታተል ይችላሉ።
                         </p>
                     </div>
 
@@ -286,9 +295,31 @@
         </div>
     </footer>
 
-    <!-- Service Worker Registration & PWA Scripts -->
+    <!-- Scripts -->
     <script>
-        // Register Service Worker
+        // ⛶ PASTOR FULLSCREEN TOGGLE
+        function togglePastorFullscreen() {
+            const videoBox = document.getElementById('pastorVideoBox');
+            const fsText = document.getElementById('pastorFsText');
+            const fsIcon = document.getElementById('pastorFsIcon');
+
+            if (!document.fullscreenElement) {
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen();
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
+                }
+                fsText.innerText = "አሳንስ";
+                fsIcon.className = "fas fa-compress text-amber-400";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fsText.innerText = "ሙሉ ስክሪን";
+                fsIcon.className = "fas fa-expand text-amber-400";
+            }
+        }
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
@@ -297,18 +328,14 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             pastorPrompt = e;
-            const btn = document.getElementById('pastorInstallBtn');
-            if (btn) btn.classList.add('animate-pulse');
         });
 
         function installPastorApp() {
             if (pastorPrompt) {
                 pastorPrompt.prompt();
-                pastorPrompt.userChoice.then((choice) => {
-                    pastorPrompt = null;
-                });
+                pastorPrompt.userChoice.then(() => { pastorPrompt = null; });
             } else {
-                alert('በስልክዎ ብሮውዘር ሜኑ (ሶስት ነጥብ) ውስጥ ገብተው "Add to Home screen" የሚለውን በመጫን እንደ አፕ መጫን ይችላሉ።');
+                alert('በስልክዎ ብሮውዘር ሜኑ ውስጥ ገብተው "Add to Home screen" የሚለውን በመጫን እንደ አፕ መጫን ይችላሉ።');
             }
         }
 
