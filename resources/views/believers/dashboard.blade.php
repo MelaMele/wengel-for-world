@@ -366,9 +366,7 @@
             }
         }
     </script>
-</body>
-</html>
-<!-- Footer -->
+    <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-8">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <span class="text-xs text-gray-500">&copy; 2024 Wengel for World. All rights reserved.</span>
@@ -378,3 +376,6 @@
             </div>
         </div>
     </footer>
+</body>
+</html>
+
