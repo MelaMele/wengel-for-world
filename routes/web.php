@@ -218,14 +218,21 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
 
-// አዳዲሶቹን የባንክ አምዶች በዳታቤዝ ውስጥ ማካተቻ (1 ጊዜ ብቻ የሚነካ)
+// አዳዲሶቹን የባንክ አምዶች በዳታቤዝ ውስጥ ማካተቻ
 Route::get('/setup-bank-columns', function () {
     try {
-        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `telebirr_no` VARCHAR(50) NULL;");
-        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `cbe_account` VARCHAR(100) NULL;");
-        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `awash_account` VARCHAR(100) NULL;");
-        DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN IF NOT EXISTS `account_holder_name` VARCHAR(255) NULL;");
-        return "<h2 style='color:green;'>✅ የባንክና ቴሌብር አምዶች ተጨምረዋል! <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
+        // አምዶቹ መኖራቸውን በደህና መንገድ ፈትሾ ማከል
+        $columns = ['telebirr_no', 'cbe_account', 'awash_account', 'account_holder_name'];
+        
+        foreach ($columns as $col) {
+            try {
+                DB::statement("ALTER TABLE `pastor_profiles` ADD COLUMN `{$col}` VARCHAR(255) NULL;");
+            } catch (\Exception $e) {
+                // ቀድሞ ካለ ችግር የለውም ዝለለው
+            }
+        }
+
+        return "<h2 style='color:green;font-family:sans-serif;'>✅ የባንክና ቴሌብር አምዶች በተሳካ ሁኔታ ተጨምረዋል! <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
     } catch (\Exception $e) {
         return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
     }
