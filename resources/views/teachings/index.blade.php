@@ -96,9 +96,8 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        &copy; 2024 Wengel for World. Powered by Mela Solution.
+    <footer class="bg-white border-t border-gray-200 py-6 px-4 text-center text-xs text-gray-500">
+        &copy; 2024 Wengel for World. Powered by <span class="text-primary font-bold">Mela Solution</span> (📞 0913064239 / 0703064239)
     </footer>
 
 </body>
