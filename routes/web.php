@@ -29,7 +29,7 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የምዕመናን ፖርታል (ቻት መግቢያና ማሳያ)
+// 1. የምዕመናን ፖርታል (Live + Chat + Giving)
 Route::get('/p/{slug}', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -55,10 +55,11 @@ Route::get('/p/{slug}', function (Request $request, $slug) {
         ->orderBy('created_at', 'asc')
         ->get();
 
-    return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone'));
+    $donationsTotal = DB::table('donations')->where('pastor_id', $pastor->id)->where('status', 'success')->sum('amount');
+
+    return view('believers.dashboard', compact('pastor', 'chatMessages', 'believerName', 'believerPhone', 'donationsTotal'));
 })->name('pastor.portal');
 
-// ምዕመኑ በስሙ መመዝገቢያ
 Route::post('/p/{slug}/believer-login', function (Request $request, $slug) {
     $request->validate(['name' => 'required|string|max:100', 'phone' => 'required|string|max:50']);
     $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
@@ -85,7 +86,6 @@ Route::get('/p/{slug}/believer-logout', function ($slug) {
     return redirect('/p/' . $slug);
 });
 
-// ምዕመኑ በጽሁፍ ወይም በድምፅ መልእክት መላኪያ (Voice + Text Message)
 Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
         $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
@@ -96,7 +96,6 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     if (!$believerPhone) return redirect('/p/' . $slug);
 
     $messageContent = $request->message;
-    // የድምፅ ፋይል ከመጣ (Audio Voice Note Base64)
     if ($request->filled('voice_data')) {
         $messageContent = 'AUDIO_VOICE:' . $request->voice_data;
     }
@@ -114,16 +113,49 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
-// 2. ሱፐር አድሚን ዳሽቦርድ
+// 2. አስራትና ስጦታ መላኪያ (Giving / Tithe Processing)
+Route::post('/p/{slug}/give', function (Request $request, $slug) {
+    $pastor = User::where('role', 'pastor')->where(function ($q) use ($slug) {
+        $q->where('email', $slug)->orWhere('id', is_numeric($slug) ? $slug : 0);
+    })->firstOrFail();
+
+    $request->validate([
+        'amount' => 'required|numeric|min:10',
+        'giving_type' => 'required',
+        'payment_method' => 'required',
+    ]);
+
+    $believerName = session('believer_name_' . $pastor->id) ?? 'ስሙ ያልተጠቀሰ ምዕመን';
+
+    DB::table('donations')->insert([
+        'pastor_id' => $pastor->id,
+        'user_id' => 1,
+        'amount' => $request->amount,
+        'currency' => $request->payment_method == 'stripe' ? 'USD' : 'ETB',
+        'type' => $request->giving_type,
+        'payment_method' => $request->payment_method,
+        'transaction_reference' => 'WENGEL-' . strtoupper(uniqid()),
+        'status' => 'success',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return back()->with('giving_success', 'የ ' . number_format($request->amount) . ' ብር አስራት/ስጦታዎ በተሳካ ሁኔታ ተቀባይነት አግኝቷል። እግዚአብሔር አብዝቶ ይባርክዎት!');
+});
+
+// 3. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     $pastors = User::where('role', 'pastor')->with('pastorProfile')->get();
     foreach ($pastors as $p) {
         $p->believers_list = DB::table('believers')->where('pastor_id', $p->id)->orderByDesc('created_at')->get();
         $p->believers_count = count($p->believers_list);
+        $p->total_given = DB::table('donations')->where('pastor_id', $p->id)->where('status', 'success')->sum('amount');
     }
     $totalBelievers = DB::table('believers')->count();
     $teachingsCount = DB::table('teachings')->count();
-    return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount'));
+    $grandTotalGiving = DB::table('donations')->where('status', 'success')->sum('amount');
+
+    return view('admin.dashboard', compact('pastors', 'totalBelievers', 'teachingsCount', 'grandTotalGiving'));
 })->name('admin.dashboard');
 
 Route::post('/super-admin/generate-pastor', function (Request $request) {
@@ -149,22 +181,23 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
     DB::table('teachings')->where('pastor_id', $id)->delete();
     DB::table('counseling_messages')->where('pastor_id', $id)->delete();
     DB::table('believers')->where('pastor_id', $id)->delete();
+    DB::table('donations')->where('pastor_id', $id)->delete();
     DB::table('users')->where('id', $id)->delete();
     return back()->with('success', 'አገልጋዩ ተሰርዟል!');
 });
 
-// 3. የፓስተሩ ዳሽቦርድ (የድምፅና የጽሁፍ መልስ መስጫ)
+// 4. የፓስተሩ ዳሽቦርድ (ስጦታዎችና የተሰበሰበ አስራት ማሳያ)
 Route::get('/pastor-desk/{id}', function ($id) {
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
-    if (!$pastor->is_verified) {
-        return view('pastors.dashboard-locked', compact('pastor'));
-    }
+    if (!$pastor->is_verified) return view('pastors.dashboard-locked', compact('pastor'));
 
     $messages = DB::table('counseling_messages')->where('pastor_id', $id)->orderByDesc('created_at')->get();
     $teachings = Teaching::where('pastor_id', $id)->latest()->get();
     $believers = DB::table('believers')->where('pastor_id', $id)->orderByDesc('created_at')->get();
+    $donations = DB::table('donations')->where('pastor_id', $id)->orderByDesc('created_at')->get();
+    $totalRaised = DB::table('donations')->where('pastor_id', $id)->where('status', 'success')->sum('amount');
 
-    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers'));
+    return view('pastors.dashboard', compact('pastor', 'messages', 'teachings', 'believers', 'donations', 'totalRaised'));
 })->name('pastor.dashboard');
 
 Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
@@ -188,7 +221,6 @@ Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id)
     return back()->with('success', 'ይዘቱ ተጭኗል!');
 });
 
-// ፓስተሩ በጽሁፍ ወይም በድምፅ መልስ መስጫ (Voice + Text Reply)
 Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     $pastor = User::findOrFail($id);
     if (!$pastor->is_verified) return back()->with('error', 'አካውንትዎ ታግዷል');
@@ -203,27 +235,24 @@ Route::post('/pastor-desk/{id}/reply', function (Request $request, $id) {
     ]);
     return back()->with('success', 'መልስዎ ተልኳል!');
 });
-// የቻት ሰንጠረዡን ወደ LONGTEXT አድሶ በአዲስ መልክ መገንቢያ
-Route::get('/fix-audio-column', function () {
-    try {
-        DB::statement("DROP TABLE IF EXISTS `counseling_messages`;");
 
-        DB::statement("CREATE TABLE `counseling_messages` (
-          `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-          `pastor_id` bigint(20) UNSIGNED NOT NULL,
-          `user_id` bigint(20) UNSIGNED NOT NULL DEFAULT 1,
-          `subject` varchar(255) NOT NULL,
-          `message` LONGTEXT NOT NULL,
-          `reply` LONGTEXT NULL,
-          `status` enum('pending','answered','closed') NOT NULL DEFAULT 'pending',
-          `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-          `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          PRIMARY KEY (`id`),
-          FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+// የ Donations ቴብል መፍጠሪያ (1 ጊዜ ብቻ የሚነካ)
+Route::get('/setup-donations-table', function () {
+    DB::statement("CREATE TABLE IF NOT EXISTS `donations` (
+      `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+      `pastor_id` bigint(20) UNSIGNED NOT NULL,
+      `user_id` bigint(20) UNSIGNED DEFAULT 1,
+      `amount` decimal(10,2) NOT NULL,
+      `currency` varchar(10) NOT NULL DEFAULT 'ETB',
+      `type` varchar(50) NOT NULL DEFAULT 'offering',
+      `payment_method` varchar(50) NOT NULL DEFAULT 'telebirr',
+      `transaction_reference` varchar(100) NOT NULL,
+      `status` enum('pending','success','failed') NOT NULL DEFAULT 'success',
+      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`),
+      FOREIGN KEY (`pastor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-        return "<h2 style='color:green;font-family:sans-serif;'>✅ የቻት ሰንጠረዥ በ LONGTEXT አቅም ሙሉ በሙሉ ተስተካክሏል! አሁን ድምፅ መላክ ይችላሉ። <br><br> <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
-    } catch (\Exception $e) {
-        return "<h2 style='color:red;'>ስህተት: " . $e->getMessage() . "</h2>";
-    }
+    return "<h2 style='color:green;'>✅ Donations Table Created! <a href='/super-admin'>ወደ ዳሽቦርድ ሂድ</a></h2>";
 });
