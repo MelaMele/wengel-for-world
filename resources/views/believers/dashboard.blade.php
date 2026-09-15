@@ -60,7 +60,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN WITH LIVE REACTIONS -->
+        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -72,9 +72,7 @@
                 </span>
             </div>
 
-            <!-- Video Frame -->
             <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoContainer">
-                
                 <div class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
@@ -83,15 +81,13 @@
                     <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ከስር ባሉት አዝራሮች አሜን ይበሉ!</p>
                 </div>
 
-                <!-- Floating Reactions Overlay -->
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-                <!-- Live Reactions Bar -->
                 <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
-                    <button onclick="sendReaction('🙏', 'አሜን!')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
-                    <button onclick="sendReaction('❤️', 'ፍቅር')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
-                    <button onclick="sendReaction('🔥', 'እሳት ነው!')" class="hover:scale-125 transition text-lg" title="እሳት">🔥</button>
-                    <button onclick="sendReaction('🙌', 'ሀሌሉያ')" class="hover:scale-125 transition text-lg" title="ሀሌሉያ">🙌</button>
+                    <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
+                    <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
+                    <button onclick="sendReaction('🔥')" class="hover:scale-125 transition text-lg" title="እሳት">🔥</button>
+                    <button onclick="sendReaction('🙌')" class="hover:scale-125 transition text-lg" title="ሀሌሉያ">🙌</button>
                 </div>
             </div>
         </div>
@@ -114,10 +110,8 @@
                     <span class="text-xs text-slate-400 font-mono">{{ $believerPhone }}</span>
                 </div>
 
-                <!-- Messages Area -->
                 <div class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50" id="chatArea">
                     @forelse($chatMessages as $msg)
-                        <!-- የምዕመኑ መልእክት (Right) -->
                         <div class="flex flex-col items-end">
                             <div class="bg-primary text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-xs leading-relaxed shadow-sm">
                                 @if(str_starts_with($msg->message, 'AUDIO_VOICE:'))
@@ -134,7 +128,6 @@
                             <span class="text-[9px] text-gray-400 mt-1">{{ $msg->created_at }}</span>
                         </div>
 
-                        <!-- የፓስተሩ መልስ (Left) -->
                         @if($msg->reply)
                             <div class="flex flex-col items-start">
                                 <div class="bg-white border-2 border-secondary/30 p-3.5 rounded-2xl rounded-tl-none max-w-[85%] text-xs leading-relaxed shadow-sm text-gray-800">
@@ -169,7 +162,6 @@
                     @endforelse
                 </div>
 
-                <!-- Input Area (ጽሁፍ + ማይክሮፎን) -->
                 <div class="p-3 bg-white border-t border-gray-200">
                     <form id="msgForm" action="/p/{{ $pastor->email }}/send-message" method="POST" class="flex items-center space-x-2">
                         @csrf
@@ -237,7 +229,7 @@
         </div>
     </main>
 
-    <!-- 🌟 SIMPLIFIED DIRECT GIVING MODAL (የቀጥታ አካውንት እና ቴሌብር ማሳያ) -->
+    <!-- 🌟 DYNAMIC GIVING MODAL (የፓስተሩ የራሱ ቴሌብርና ባንክ ማሳያ) -->
     <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
         
         <div class="bg-gradient-to-r from-amber-600 via-secondary to-amber-700 text-white p-6 flex items-center justify-between">
@@ -260,7 +252,7 @@
                 የሚመችዎትን የክፍያ አማራጭ በመምረጥ የሂሳብ ቁጥሩን ኮፒ አድርገው በባንክ ወይም በቴሌብር መተግበሪያዎ ክፍያውን መፈጸም ይችላሉ።
             </p>
 
-            <!-- Option 1: Telebirr -->
+            <!-- Option 1: Telebirr (የዚህ ፓስተር የራሱ ቴሌብር) -->
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-secondary transition">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-black text-secondary flex items-center space-x-1.5">
@@ -270,16 +262,17 @@
                     <span class="text-[10px] text-gray-400 font-medium">በስልክ ቁጥር</span>
                 </div>
                 <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
-                    <span class="font-mono font-bold text-sm text-gray-800" id="telebirrNum">{{ $pastor->phone }}</span>
+                    <span class="font-mono font-bold text-sm text-gray-800" id="telebirrNum">{{ $pastor->pastorProfile->telebirr_no ?? $pastor->phone }}</span>
                     <button onclick="copyToClipboard('telebirrNum', this)" class="px-3 py-1.5 bg-secondary text-white text-[11px] font-bold rounded-lg hover:bg-amber-600 transition flex items-center space-x-1">
                         <i class="fas fa-copy text-[10px]"></i>
                         <span>ኮፒ</span>
                     </button>
                 </div>
-                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->name }}</strong></span>
+                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
             </div>
 
-            <!-- Option 2: Commercial Bank of Ethiopia (CBE) -->
+            <!-- Option 2: CBE (የዚህ ፓስተር የራሱ CBE) -->
+            @if(!empty($pastor->pastorProfile->cbe_account))
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-primary transition">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-black text-primary flex items-center space-x-1.5">
@@ -289,16 +282,37 @@
                     <span class="text-[10px] text-gray-400 font-medium">የባንክ ሂሳብ</span>
                 </div>
                 <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
-                    <span class="font-mono font-bold text-sm text-gray-800" id="cbeNum">1000123456789</span>
+                    <span class="font-mono font-bold text-sm text-gray-800" id="cbeNum">{{ $pastor->pastorProfile->cbe_account }}</span>
                     <button onclick="copyToClipboard('cbeNum', this)" class="px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-blue-900 transition flex items-center space-x-1">
                         <i class="fas fa-copy text-[10px]"></i>
                         <span>ኮፒ</span>
                     </button>
                 </div>
-                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->church_name ?? $pastor->name }}</strong></span>
+                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
             </div>
+            @endif
 
-            <!-- Scripture Blessing Quote -->
+            <!-- Option 3: Awash (የዚህ ፓስተር የራሱ Awash) -->
+            @if(!empty($pastor->pastorProfile->awash_account))
+            <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-blue-500 transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-black text-blue-800 flex items-center space-x-1.5">
+                        <i class="fas fa-landmark"></i>
+                        <span>አዋሽ ባንክ (Awash Bank)</span>
+                    </span>
+                    <span class="text-[10px] text-gray-400 font-medium">የባንክ ሂሳብ</span>
+                </div>
+                <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
+                    <span class="font-mono font-bold text-sm text-gray-800" id="awashNum">{{ $pastor->pastorProfile->awash_account }}</span>
+                    <button onclick="copyToClipboard('awashNum', this)" class="px-3 py-1.5 bg-blue-800 text-white text-[11px] font-bold rounded-lg hover:bg-blue-900 transition flex items-center space-x-1">
+                        <i class="fas fa-copy text-[10px]"></i>
+                        <span>ኮፒ</span>
+                    </button>
+                </div>
+                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
+            </div>
+            @endif
+
             <div class="bg-amber-50 rounded-2xl p-4 text-center border border-amber-200/60">
                 <p class="text-xs text-amber-900 italic">
                     "እግዚአብሔር በደስታ የሚሰጠውን ይወዳልና እያንዳንዱ በልቡ እንዳሰበ ይስጥ።" (2ኛ ቆሮንቶስ 9:7)
@@ -322,7 +336,7 @@
         </div>
     </footer>
 
-    <!-- Scripts: Live Floating Reactions, Audio Recording & Copy Helper -->
+    <!-- Scripts -->
     <script>
         function copyToClipboard(elementId, btn) {
             const text = document.getElementById(elementId).innerText;
@@ -330,15 +344,11 @@
                 const originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check text-[10px]"></i> <span>ኮፒ ሆኗል!</span>';
                 btn.classList.add('bg-emerald-600');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalHtml;
-                    btn.classList.remove('bg-emerald-600');
-                }, 2500);
+                setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-emerald-600'); }, 2500);
             });
         }
 
-        function sendReaction(emoji, text) {
+        function sendReaction(emoji) {
             const overlay = document.getElementById('reactionsOverlay');
             const el = document.createElement('div');
             el.className = 'absolute text-3xl animate-float select-none';
@@ -346,7 +356,6 @@
             el.style.bottom = '20px';
             el.innerHTML = emoji;
             overlay.appendChild(el);
-
             setTimeout(() => { el.remove(); }, 1800);
         }
 
