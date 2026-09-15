@@ -369,7 +369,7 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-8">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <span class="text-xs text-gray-500">&copy; 2024 Wengel for World. All rights reserved.</span>
+            <span class="text-xs text-gray-500">&copy; 2026 Wengel for World. All rights reserved.</span>
             <div class="text-xs text-gray-600 font-medium">
                 Developed by <span class="text-primary font-black">Mela Solution</span> | 
                 <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
