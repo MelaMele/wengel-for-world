@@ -282,3 +282,13 @@
     </script>
 </body>
 </html>
+<!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 px-4 mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <span class="text-xs text-gray-500">Wengel for World — የአገልጋዮች የስራ ማዕከል</span>
+            <div class="text-xs text-gray-600 font-medium">
+                የሲስተም አጋር፡ <span class="text-primary font-black">Mela Solution</span> | 
+                <span class="font-mono font-bold text-gray-800">📞 0913064239 / 0703064239</span>
+            </div>
+        </div>
+    </footer>
