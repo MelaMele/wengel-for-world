@@ -9,7 +9,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- PeerJS for Real-time Video Viewing -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         tailwind.config = {
@@ -46,11 +45,6 @@
             </div>
 
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <button id="installAppBtn" onclick="installApp()" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition items-center space-x-1.5 animate-bounce">
-                    <i class="fas fa-download text-[10px]"></i>
-                    <span>አፑን ጫን</span>
-                </button>
-
                 <button onclick="document.getElementById('givingModal').showModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black rounded-xl shadow-md transition flex items-center space-x-1.5">
                     <i class="fas fa-hand-holding-heart"></i>
                     <span>ስጦታ ስጥ</span>
@@ -69,7 +63,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 REAL-TIME LIVE VIDEO SCREEN -->
+        <!-- 🔴 LIVE VIDEO SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -78,21 +72,15 @@
                 </div>
                 
                 <div class="flex items-center space-x-2">
-                    <button onclick="toggleFullscreen()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5 transition" title="ስክሪኑን አሳድግ">
+                    <button onclick="toggleFullscreen()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5 transition">
                         <i class="fas fa-expand text-amber-400" id="fsIcon"></i>
                         <span id="fsText">ሙሉ ስክሪን</span>
                     </button>
-
-                    <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold hidden sm:inline">
-                        🔴 LIVE
-                    </span>
                 </div>
             </div>
 
-            <!-- Video Frame -->
+            <!-- Video Box -->
             <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
-                
-                <!-- Remote Pastor Video Stream -->
                 <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
 
                 <div id="waitingPlaceholder" class="text-center p-8">
@@ -100,20 +88,20 @@
                         <i class="fas fa-satellite-dish"></i>
                     </div>
                     <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto" id="connectStatus">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታያሉ...</p>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto mb-4" id="connectStatus">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ...</p>
                     
-                    <button onclick="connectToPastorLive()" class="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition">
-                        <i class="fas fa-sync mr-1"></i> ስርጭቱን ፈልግና ተገናኝ
+                    <button onclick="connectToPastorLive()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition shadow-lg">
+                        <i class="fas fa-play mr-1"></i> ስርጭቱን ተመልከት
                     </button>
                 </div>
 
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
                 <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
-                    <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
-                    <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
-                    <button onclick="sendReaction('🔥')" class="hover:scale-125 transition text-lg" title="እሳት">🔥</button>
-                    <button onclick="sendReaction('🙌')" class="hover:scale-125 transition text-lg" title="ሀሌሉያ">🙌</button>
+                    <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg">🙏</button>
+                    <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg">❤️</button>
+                    <button onclick="sendReaction('🔥')" class="hover:scale-125 transition text-lg">🔥</button>
+                    <button onclick="sendReaction('🙌')" class="hover:scale-125 transition text-lg">🙌</button>
                 </div>
             </div>
         </div>
@@ -255,7 +243,7 @@
         </div>
     </main>
 
-    <!-- 🌟 GIVING MODAL -->
+    <!-- 🌟 DYNAMIC GIVING MODAL -->
     <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
         <div class="bg-gradient-to-r from-amber-600 via-secondary to-amber-700 text-white p-6 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -277,7 +265,7 @@
                 የሚመችዎትን የክፍያ አማራጭ በመምረጥ የሂሳብ ቁጥሩን ኮፒ አድርገው በባንክ ወይም በቴሌብር መተግበሪያዎ ክፍያውን መፈጸም ይችላሉ።
             </p>
 
-            <!-- Option 1: Telebirr -->
+            <!-- Telebirr -->
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-secondary transition">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-black text-secondary flex items-center space-x-1.5">
@@ -296,7 +284,7 @@
                 <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
             </div>
 
-            <!-- Option 2: CBE -->
+            <!-- CBE -->
             @if(!empty($pastor->pastorProfile->cbe_account))
             <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-primary transition">
                 <div class="flex items-center justify-between mb-2">
@@ -309,27 +297,6 @@
                 <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
                     <span class="font-mono font-bold text-sm text-gray-800" id="cbeNum">{{ $pastor->pastorProfile->cbe_account }}</span>
                     <button onclick="copyToClipboard('cbeNum', this)" class="px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-blue-900 transition flex items-center space-x-1">
-                        <i class="fas fa-copy text-[10px]"></i>
-                        <span>ኮፒ</span>
-                    </button>
-                </div>
-                <span class="text-[11px] text-gray-500 mt-1 block">የሂሳቡ ስም፡ <strong class="text-gray-700">{{ $pastor->pastorProfile->account_holder_name ?? $pastor->name }}</strong></span>
-            </div>
-            @endif
-
-            <!-- Option 3: Awash -->
-            @if(!empty($pastor->pastorProfile->awash_account))
-            <div class="p-4 rounded-2xl bg-slate-50 border border-gray-200 hover:border-blue-500 transition">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-black text-blue-800 flex items-center space-x-1.5">
-                        <i class="fas fa-landmark"></i>
-                        <span>አዋሽ ባንክ (Awash Bank)</span>
-                    </span>
-                    <span class="text-[10px] text-gray-400 font-medium">የባንክ ሂሳብ</span>
-                </div>
-                <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200">
-                    <span class="font-mono font-bold text-sm text-gray-800" id="awashNum">{{ $pastor->pastorProfile->awash_account }}</span>
-                    <button onclick="copyToClipboard('awashNum', this)" class="px-3 py-1.5 bg-blue-800 text-white text-[11px] font-bold rounded-lg hover:bg-blue-900 transition flex items-center space-x-1">
                         <i class="fas fa-copy text-[10px]"></i>
                         <span>ኮፒ</span>
                     </button>
@@ -355,16 +322,16 @@
         </div>
     </footer>
 
-    <!-- Scripts: Real-time Video Viewing via PeerJS -->
+    <!-- Scripts -->
     <script>
         const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
         let peer = null;
 
         function connectToPastorLive() {
             const statusText = document.getElementById('connectStatus');
-            statusText.innerText = "ከፓስተሩ ስርጭት ጋር በመገናኘት ላይ...";
+            statusText.innerText = "ከፓስተሩ ጋር በመገናኘት ላይ...";
 
-            peer = new Peer(); // Random Believer Peer
+            peer = new Peer();
 
             peer.on('open', () => {
                 // ለፓስተሩ ክፍል መደወል
@@ -378,78 +345,14 @@
                     video.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                 });
-
-                call.on('close', () => {
-                    alert('የቀጥታ ስርጭቱ ተጠናቋል።');
-                    location.reload();
-                });
             });
 
             peer.on('error', (err) => {
-                statusText.innerText = "ፓስተሩ ገና የቀጥታ ስርጭት አልጀመሩም። እባክዎ ጥቂት ቆይተው እንደገና ይሞክሩ።";
-            });
-        }
-
-        // Dummy stream for receiving video only
-        function createEmptyMediaStream() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const dst = oscillator.connect(audioContext.createMediaStreamDestination());
-            oscillator.start();
-            const track = dst.stream.getAudioTracks()[0];
-            track.enabled = false;
-            return dst.stream;
-        }
-
-        <!-- Real-time Video Fix for Viewers -->
-    <script>
-        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
-        let peer = null;
-
-        function connectToPastorLive() {
-            const statusText = document.getElementById('connectStatus');
-            statusText.innerText = "ከፓስተሩ ጋር በመገናኘት ላይ...";
-
-            // አዲስ የ PeerJS ግንኙነት መክፈት
-            peer = new Peer();
-
-            peer.on('open', (id) => {
-                console.log('Believer connected with ID:', id);
-                
-                // ለፓስተሩ ክፍል መደወል
-                const call = peer.call(pastorRoomId, createEmptyAudioStream());
-
-                call.on('stream', (remoteStream) => {
-                    const video = document.getElementById('remoteVideo');
-                    const placeholder = document.getElementById('waitingPlaceholder');
-
-                    video.srcObject = remoteStream;
-                    video.muted = false; // ድምፅ እንዲኖረው
-                    video.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
-
-                    video.play().catch(e => {
-                        // ብሮውዘሩ ድምፅ ካገደው በ muted ጀምሮ አዝራር ማሳየት
-                        video.muted = true;
-                        video.play();
-                    });
-                });
-
-                call.on('close', () => {
-                    document.getElementById('remoteVideo').classList.add('hidden');
-                    document.getElementById('waitingPlaceholder').classList.remove('hidden');
-                    statusText.innerText = "የቀጥታ ስርጭቱ ተጠናቋል።";
-                });
-            });
-
-            peer.on('error', (err) => {
-                console.log('Peer error:', err);
                 statusText.innerText = "ፓስተሩ ገና ስርጭት አልጀመሩም። እባክዎ ጥቂት ቆይተው እንደገና ይሞክሩ።";
             });
         }
 
-        // ባዶ የድምፅ ስትሪም መፍጠር (ብሮውዘሩ ማይክሮፎን እንዳይጠይቅ)
-        function createEmptyAudioStream() {
+        function createEmptyMediaStream() {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = ctx.createOscillator();
             const dst = osc.connect(ctx.createMediaStreamDestination());
@@ -459,10 +362,89 @@
             return dst.stream;
         }
 
-        // ገጹ እንደተከፈተ ቪዲዮውን ለማገናኘት መሞከር
-        window.addEventListener('load', () => {
-            setTimeout(connectToPastorLive, 1500);
-        });
+        function toggleFullscreen() {
+            const videoBox = document.getElementById('videoBox');
+            const fsText = document.getElementById('fsText');
+            const fsIcon = document.getElementById('fsIcon');
+
+            if (!document.fullscreenElement) {
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen();
+                }
+                fsText.innerText = "አሳንስ";
+                fsIcon.className = "fas fa-compress text-amber-400";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fsText.innerText = "ሙሉ ስክሪን";
+                fsIcon.className = "fas fa-expand text-amber-400";
+            }
+        }
+
+        function copyToClipboard(elementId, btn) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-[10px]"></i> <span>ኮፒ ሆኗል!</span>';
+                btn.classList.add('bg-emerald-600');
+                setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-emerald-600'); }, 2500);
+            });
+        }
+
+        function sendReaction(emoji) {
+            const overlay = document.getElementById('reactionsOverlay');
+            const el = document.createElement('div');
+            el.className = 'absolute text-3xl animate-float select-none';
+            el.style.left = (Math.random() * 80 + 10) + '%';
+            el.style.bottom = '20px';
+            el.innerHTML = emoji;
+            overlay.appendChild(el);
+            setTimeout(() => { el.remove(); }, 1800);
+        }
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        async function toggleRecording() {
+            const btn = document.getElementById('recordBtn');
+            const icon = document.getElementById('micIcon');
+            const status = document.getElementById('recordStatus');
+            const form = document.getElementById('msgForm');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => {
+                            document.getElementById('voiceDataInput').value = reader.result;
+                            document.getElementById('textInput').removeAttribute('required');
+                            form.submit();
+                        };
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('bg-rose-600', 'text-white');
+                    icon.className = 'fas fa-stop text-sm';
+                    status.classList.remove('hidden');
+                } catch (err) {
+                    alert('ማይክሮፎን መክፈት አልተቻለም');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.classList.remove('bg-rose-600', 'text-white');
+                icon.className = 'fas fa-microphone text-sm';
+                status.classList.add('hidden');
+            }
+        }
     </script>
 </body>
 </html>
