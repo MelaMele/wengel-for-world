@@ -9,8 +9,7 @@ use App\Models\Teaching;
 use App\Models\Category;
 use App\Models\User;
 
-// 🧹 ራስ-ሰር የድምፅ ማጽጃ ሞተር (AUTO-CLEANER)
-// ማንኛውም ሰው ገጹን በከፈተ ቁጥር ከ 2 ቀን (48 ሰዓት) በላይ የሆናቸውን ትላልቅ የድምፅ ፋይሎች ዳታቤዙን እንዳይሞሉ በራሱ ያጸዳቸዋል!
+// 🧹 ራስ-ሰር የድምፅ ማጽጃ (Auto-Cleaner 48 Hours)
 function purgeOldVoiceNotes() {
     try {
         DB::table('counseling_messages')
@@ -22,12 +21,9 @@ function purgeOldVoiceNotes() {
             ->where('updated_at', '<', now()->subDays(2))
             ->where('reply', 'like', 'AUDIO_VOICE:%')
             ->update(['reply' => '🎤 [የፓስተሩ የድምፅ መልስ - ከ 2 ቀን በላይ ስለሆነው በሲስተሙ ተጠርጓል]']);
-    } catch (\Exception $e) {
-        // ዝም ብሎ ያልፋል
-    }
+    } catch (\Exception $e) {}
 }
 
-// ዋና ገጾች
 Route::get('/', function () {
     purgeOldVoiceNotes();
     return app(HomeController::class)->index();
@@ -51,9 +47,9 @@ Route::get('/teachings/{id}', function ($id) {
 Route::get('/pastors', [PastorController::class, 'index'])->name('pastors.index');
 Route::get('/pastors/{id}', [PastorController::class, 'show'])->name('pastors.show');
 
-// 1. የምዕመናን ፖርታል (የፓስተሩን ግላዊ አካውንቶች ያሳያል)
+// 1. የምዕመናን ፖርታል
 Route::get('/p/{slug}', function (Request $request, $slug) {
-    purgeOldVoiceNotes(); // የቆዩ ድምፆችን ያጸዳል
+    purgeOldVoiceNotes();
 
     $pastor = User::where('role', 'pastor')
         ->where(function ($q) use ($slug) {
@@ -137,6 +133,25 @@ Route::post('/p/{slug}/send-message', function (Request $request, $slug) {
     return back();
 });
 
+// 🔴 የቀጥታ ቪዲዮ ማሰራጫ መስመሮች (IN-HOUSE LIVE STREAM API)
+Route::post('/live/broadcast/{id}', function (Request $request, $id) {
+    // ፓስተሩ የላከውን የቀጥታ ምስል ፍሬም በዳታቤዝ መመዝገብ
+    DB::table('pastor_profiles')->where('user_id', $id)->update([
+        'cover_image' => $request->frame, // ጊዜያዊ የቪዲዮ ፍሬም
+        'updated_at' => now(),
+    ]);
+    return response()->json(['status' => 'ok']);
+});
+
+Route::get('/live/stream/{id}', function ($id) {
+    // ምዕመኑ በየሰከንዱ አዲሱን የቪዲዮ ፍሬም ያገኛል
+    $profile = DB::table('pastor_profiles')->where('user_id', $id)->first();
+    return response()->json([
+        'frame' => $profile->cover_image ?? null,
+        'is_live' => $profile && (strtotime(now()) - strtotime($profile->updated_at) < 6)
+    ]);
+});
+
 // 2. ሱፐር አድሚን ዳሽቦርድ
 Route::get('/super-admin', function () {
     purgeOldVoiceNotes();
@@ -180,7 +195,7 @@ Route::post('/super-admin/delete-pastor/{id}', function ($id) {
 
 // 3. የፓስተሩ ዳሽቦርድ
 Route::get('/pastor-desk/{id}', function ($id) {
-    purgeOldVoiceNotes(); // የቆዩ ድምፆችን ያጸዳል
+    purgeOldVoiceNotes();
 
     $pastor = User::where('role', 'pastor')->with('pastorProfile')->findOrFail($id);
     if (!$pastor->is_verified) return view('pastors.dashboard-locked', compact('pastor'));
@@ -194,21 +209,17 @@ Route::get('/pastor-desk/{id}', function ($id) {
 
 Route::post('/pastor-desk/{id}/update-accounts', function (Request $request, $id) {
     $request->validate([
-        'telebirr_no' => 'nullable|string',
-        'cbe_account' => 'nullable|string',
-        'awash_account' => 'nullable|string',
-        'account_holder_name' => 'nullable|string',
+        'telebirr_no' => 'nullable|string', 'cbe_account' => 'nullable|string',
+        'awash_account' => 'nullable|string', 'account_holder_name' => 'nullable|string',
     ]);
 
     DB::table('pastor_profiles')->where('user_id', $id)->update([
-        'telebirr_no' => $request->telebirr_no,
-        'cbe_account' => $request->cbe_account,
-        'awash_account' => $request->awash_account,
-        'account_holder_name' => $request->account_holder_name,
+        'telebirr_no' => $request->telebirr_no, 'cbe_account' => $request->cbe_account,
+        'awash_account' => $request->awash_account, 'account_holder_name' => $request->account_holder_name,
         'updated_at' => now(),
     ]);
 
-    return back()->with('success', 'የአስራት እና ስጦታ መቀበያ የባንክ መረጃዎችዎ በተሳካ ሁኔታ ተመዝግበዋል!');
+    return back()->with('success', 'የባንክ መረጃዎችዎ ተመዝግበዋል!');
 });
 
 Route::post('/pastor-desk/{id}/upload-content', function (Request $request, $id) {
