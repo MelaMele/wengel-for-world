@@ -62,7 +62,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 LIVE VIDEO BROADCAST SCREEN -->
+        <!-- 🔴 LIVE VIDEO SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -81,14 +81,16 @@
                 </div>
             </div>
 
-            <!-- Video Box (100% Reliable Embed Frame) -->
-            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative border border-slate-700 shadow-inner" id="videoBox">
-                <iframe 
-                    id="liveIframe"
-                    src="https://meet.jit.si/wengel-live-pastor-{{ $pastor->id }}#config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.TOOLBAR_BUTTONS=['microphone','camera','fullscreen']" 
-                    allow="camera; microphone; fullscreen; display-capture; autoplay"
-                    class="w-full h-full border-0">
-                </iframe>
+            <!-- Video Frame (Pure Native Video Player) -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
+                
+                <div class="text-center p-8">
+                    <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታያሉ...</p>
+                </div>
 
                 <!-- Floating Reactions Overlay -->
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
