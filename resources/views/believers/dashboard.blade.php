@@ -62,7 +62,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 LIVE VIDEO SCREEN -->
+        <!-- 🔴 IN-HOUSE LIVE VIDEO SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -81,15 +81,19 @@
                 </div>
             </div>
 
-            <!-- Video Frame (Pure Native Video Player) -->
+            <!-- Video Box (In-House Direct Receiver) -->
             <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
                 
-                <div class="text-center p-8">
+                <!-- Live Video Frame -->
+                <img id="liveStreamImg" class="w-full h-full object-cover hidden" alt="Live Video Frame">
+
+                <!-- Placeholder when Pastor is Offline -->
+                <div id="waitingPlaceholder" class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
-                    <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታያሉ...</p>
+                    <h4 class="text-base font-bold text-slate-200 mb-1">ዓለም አቀፍ የቀጥታ ስርጭት መድረክ</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታያሉ።</p>
                 </div>
 
                 <!-- Floating Reactions Overlay -->
@@ -321,8 +325,28 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- In-House Live Stream Polling Script -->
     <script>
+        const liveImg = document.getElementById('liveStreamImg');
+        const placeholder = document.getElementById('waitingPlaceholder');
+
+        // በየግማሽ ሰከንዱ የፓስተሩን የቀጥታ ስርጭት መፈተሽ
+        setInterval(() => {
+            fetch('/live/stream/{{ $pastor->id }}')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.is_live && data.frame) {
+                        liveImg.src = data.frame;
+                        liveImg.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    } else {
+                        liveImg.classList.add('hidden');
+                        placeholder.classList.remove('hidden');
+                    }
+                })
+                .catch(() => {});
+        }, 500);
+
         function toggleFullscreen() {
             const videoBox = document.getElementById('videoBox');
             const fsText = document.getElementById('fsText');
@@ -331,6 +355,8 @@
             if (!document.fullscreenElement) {
                 if (videoBox.requestFullscreen) {
                     videoBox.requestFullscreen();
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
                 }
                 fsText.innerText = "አሳንስ";
                 fsIcon.className = "fas fa-compress text-amber-400";
