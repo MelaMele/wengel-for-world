@@ -120,25 +120,47 @@
             </form>
         </div>
 
-        <!-- SECTION 1: RELIABLE BROADCAST SCREEN -->
+        <!-- SECTION 1: NATIVE BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h3 class="text-xl font-black mb-1">የቀጥታ ስርጭት ማስተላለፊያ ስክሪን</h3>
-                    <p class="text-xs text-slate-400">ካሜራዎንና ማይክሮፎንዎን ከፍተው ያስተምሩ፤ ምዕመናን በቀጥታ ያዩዎታል</p>
-                </div>
-                <button onclick="togglePastorFullscreen()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5 transition">
-                    <i class="fas fa-expand text-amber-400" id="pastorFsIcon"></i>
-                    <span id="pastorFsText">ሙሉ ስክሪን</span>
-                </button>
-            </div>
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                
+                <div class="w-full md:w-2/3 bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border-2 border-slate-700 shadow-inner" id="pastorVideoBox">
+                    <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                    
+                    <div id="videoPlaceholder" class="text-center p-6">
+                        <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-secondary text-2xl mx-auto mb-3">
+                            <i class="fas fa-video-slash"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-300 mb-1">የቀጥታ ስርጭት ስክሪን (Live Screen)</h4>
+                        <p class="text-xs text-slate-500 max-w-sm mx-auto">ካሜራዎንና ማይክሮፎንዎን ከፍተው ለምዕመናን በቀጥታ ፊት ለፊት ያስተምሩ እና ይጸልዩ።</p>
+                    </div>
 
-            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative border-2 border-slate-700 shadow-inner" id="pastorVideoBox">
-                <iframe 
-                    src="https://meet.jit.si/wengel-live-pastor-{{ $pastor->id }}#config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.TOOLBAR_BUTTONS=['microphone','camera','fullscreen','tileview']" 
-                    allow="camera; microphone; fullscreen; display-capture; autoplay"
-                    class="w-full h-full border-0">
-                </iframe>
+                    <button onclick="togglePastorFullscreen()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-1.5 transition z-20 backdrop-blur">
+                        <i class="fas fa-expand text-amber-400" id="pastorFsIcon"></i>
+                        <span id="pastorFsText">ሙሉ ስክሪን</span>
+                    </button>
+
+                    <div id="liveBadge" class="absolute top-4 left-4 bg-rose-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full hidden items-center space-x-1 animate-pulse z-20">
+                        <span class="w-2 h-2 rounded-full bg-white"></span>
+                        <span>🔴 በቀጥታ ስርጭት ላይ (LIVE)</span>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-1/3 flex flex-col justify-between space-y-4">
+                    <div>
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-1">ቀጥታ አገልግሎት</span>
+                        <h3 class="text-xl font-black mb-2">የቪዲዮና ድምፅ ስርጭት ይጀምሩ</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-6">
+                            አዝራሩን ሲጫኑ የስልክዎ ካሜራ ይከፈታል፤ ምዕመናን ወዲያውኑ ሊያዩዎትና ሊሰሙዎት ይችላሉ።
+                        </p>
+                    </div>
+
+                    <button id="startLiveBtn" onclick="toggleCamera()" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-video"></i>
+                        <span id="btnText">ካሜራና ማይክሮፎን ክፈት (Start Live)</span>
+                    </button>
+                </div>
+
             </div>
         </div>
 
@@ -263,8 +285,48 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- Native Camera Script -->
     <script>
+        let localStream = null;
+        let isStreaming = false;
+
+        async function toggleCamera() {
+            const video = document.getElementById('localVideo');
+            const placeholder = document.getElementById('videoPlaceholder');
+            const badge = document.getElementById('liveBadge');
+            const btnText = document.getElementById('btnText');
+
+            if (!isStreaming) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user" }, 
+                        audio: true 
+                    });
+
+                    video.srcObject = localStream;
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                    btnText.innerText = "ስርጭቱን አቁም (Stop Live)";
+                    isStreaming = true;
+
+                } catch (err) {
+                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ለብሮውዘርዎ ፈቃድ ይስጡ።");
+                }
+            } else {
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+                video.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+                btnText.innerText = "ካሜራና ማይክሮፎን ክፈት (Start Live)";
+                isStreaming = false;
+            }
+        }
+
         function togglePastorFullscreen() {
             const videoBox = document.getElementById('pastorVideoBox');
             const fsText = document.getElementById('pastorFsText');
