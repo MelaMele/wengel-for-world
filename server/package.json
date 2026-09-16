@@ -1,0 +1,13 @@
+{
+  "name": "wengel-media-server",
+  "version": "1.0.0",
+  "description": "In-house Real-time Video Streaming Server for Wengel for World by Mela Solution",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
