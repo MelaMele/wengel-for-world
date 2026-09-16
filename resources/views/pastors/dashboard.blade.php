@@ -120,7 +120,7 @@
             </form>
         </div>
 
-        <!-- SECTION 1: NATIVE BROADCAST SCREEN -->
+        <!-- SECTION 1: IN-HOUSE BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 
@@ -285,9 +285,10 @@
         </div>
     </footer>
 
-    <!-- Native Camera Script -->
+    <!-- Native Live Broadcaster Script -->
     <script>
         let localStream = null;
+        let broadcastInterval = null;
         let isStreaming = false;
 
         async function toggleCamera() {
@@ -299,7 +300,7 @@
             if (!isStreaming) {
                 try {
                     localStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "user" }, 
+                        video: { width: 480, height: 360, facingMode: "user" }, 
                         audio: true 
                     });
 
@@ -311,10 +312,33 @@
                     btnText.innerText = "ስርጭቱን አቁም (Stop Live)";
                     isStreaming = true;
 
+                    // ካሜራውን በየግማሽ ሰከንዱ በቀጥታ ለምዕመናን ማስተላለፍ
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 480;
+                    canvas.height = 360;
+                    const ctx = canvas.getContext('2d');
+
+                    broadcastInterval = setInterval(() => {
+                        if (isStreaming && video.videoWidth > 0) {
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const frameData = canvas.toDataURL('image/jpeg', 0.5);
+
+                            fetch('/live/broadcast/{{ $pastor->id }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ frame: frameData })
+                            }).catch(() => {});
+                        }
+                    }, 500);
+
                 } catch (err) {
-                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ለብሮውዘርዎ ፈቃድ ይስጡ።");
+                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ።");
                 }
             } else {
+                if (broadcastInterval) clearInterval(broadcastInterval);
                 if (localStream) {
                     localStream.getTracks().forEach(track => track.stop());
                 }
@@ -335,6 +359,8 @@
             if (!document.fullscreenElement) {
                 if (videoBox.requestFullscreen) {
                     videoBox.requestFullscreen();
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
                 }
                 fsText.innerText = "አሳንስ";
                 fsIcon.className = "fas fa-compress text-amber-400";
