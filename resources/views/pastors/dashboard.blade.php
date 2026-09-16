@@ -9,7 +9,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- PeerJS for Real-time Video Broadcasting -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         tailwind.config = {
@@ -37,12 +36,7 @@
             </div>
 
             <div class="flex items-center space-x-2">
-                <button id="pastorInstallBtn" onclick="installPastorApp()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center space-x-1.5">
-                    <i class="fas fa-mobile-alt"></i>
-                    <span>ዳሽቦርዱን በስልክህ ጫን</span>
-                </button>
-
-                <a href="/p/{{ $pastor->email }}" target="_blank" class="px-3.5 py-1.5 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition hidden sm:flex items-center space-x-1.5">
+                <a href="/p/{{ $pastor->email }}" target="_blank" class="px-3.5 py-1.5 bg-blue-50 text-primary hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center space-x-1.5">
                     <i class="fas fa-globe text-[10px]"></i>
                     <span>የምዕመናን ገጽ</span>
                 </a>
@@ -127,7 +121,7 @@
             </form>
         </div>
 
-        <!-- SECTION 1: REAL-TIME BROADCAST SCREEN WITH PEERJS -->
+        <!-- SECTION 1: LIVE BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-800">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 
@@ -142,14 +136,14 @@
                         <p class="text-xs text-slate-500 max-w-sm mx-auto">ካሜራዎንና ማይክሮፎንዎን ከፍተው ለምዕመናን በቀጥታ ፊት ለፊት ያስተምሩ እና ይጸልዩ።</p>
                     </div>
 
-                    <button onclick="togglePastorFullscreen()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-1.5 transition z-20 backdrop-blur" title="ስክሪኑን አሳድግ">
+                    <button onclick="togglePastorFullscreen()" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-xl border border-white/20 flex items-center space-x-1.5 transition z-20 backdrop-blur">
                         <i class="fas fa-expand text-amber-400" id="pastorFsIcon"></i>
                         <span id="pastorFsText">ሙሉ ስክሪን</span>
                     </button>
 
                     <div id="liveBadge" class="absolute top-4 left-4 bg-rose-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full hidden items-center space-x-1 animate-pulse z-20">
                         <span class="w-2 h-2 rounded-full bg-white"></span>
-                        <span>🔴 በቀጥታ ስርጭት ላይ (LIVE TO BELIEVERS)</span>
+                        <span>🔴 በቀጥታ ስርጭት ላይ (LIVE)</span>
                     </div>
                 </div>
 
@@ -292,21 +286,8 @@
         </div>
     </footer>
 
-    <!-- Scripts: Real-time Video Streaming via PeerJS -->
+    <!-- Scripts -->
     <script>
-        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
-        let peer = null;
-        let localStream = null;
-        let isStreaming = false;
-
-        function initPeer() {
-            peer = new Peer(pastorRoomId);
-
-            peer.on('open', (id) => {
-                console.log('Pastor broadcasting on room:', id);
-            });
-
-            <script>
         const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
         let peer = null;
         let localStream = null;
@@ -320,12 +301,7 @@
 
             if (!isStreaming) {
                 try {
-                    // ካሜራና ማይክሮፎን መክፈት
-                    localStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { width: 1280, height: 720 }, 
-                        audio: true 
-                    });
-
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                     video.srcObject = localStream;
                     video.classList.remove('hidden');
                     placeholder.classList.add('hidden');
@@ -334,21 +310,16 @@
                     btnText.innerText = "ስርጭቱን አቁም (Stop Live)";
                     isStreaming = true;
 
-                    // PeerJS ክፍል መክፈት
+                    // PeerJS ስርጭት መክፈት
                     if (peer) peer.destroy();
                     peer = new Peer(pastorRoomId);
 
-                    peer.on('open', (id) => {
-                        console.log('Pastor Room is LIVE on ID:', id);
-                    });
-
-                    // ማንኛውም ምዕመን ሲመጣ ቪዲዮውን በቀጥታ ማስተላለፍ
                     peer.on('call', (call) => {
                         call.answer(localStream);
                     });
 
                 } catch (err) {
-                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ። " + err.message);
+                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ።");
                 }
             } else {
                 if (localStream) {
@@ -363,6 +334,46 @@
                 badge.classList.remove('flex');
                 btnText.innerText = "ካሜራና ማይክሮፎን ክፈት (Start Live)";
                 isStreaming = false;
+            }
+        }
+
+        function togglePastorFullscreen() {
+            const videoBox = document.getElementById('pastorVideoBox');
+            const fsText = document.getElementById('pastorFsText');
+            const fsIcon = document.getElementById('pastorFsIcon');
+
+            if (!document.fullscreenElement) {
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen();
+                }
+                fsText.innerText = "አሳንስ";
+                fsIcon.className = "fas fa-compress text-amber-400";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fsText.innerText = "ሙሉ ስክሪን";
+                fsIcon.className = "fas fa-expand text-amber-400";
+            }
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText("https://wengel-for-world.vercel.app/p/{{ $pastor->email }}").then(() => {
+                document.getElementById('copyBtnText').innerText = "ኮፒ ተደርጓል! ✓";
+                setTimeout(() => { document.getElementById('copyBtnText').innerText = "ሊንኩን ኮፒ አድርግ"; }, 3000);
+            });
+        }
+
+        function toggleUploadType() {
+            const type = document.getElementById('contentTypeSelect').value;
+            const fileBox = document.getElementById('fileUploadBox');
+            const articleBox = document.getElementById('articleBox');
+            if (type === 'article') {
+                fileBox.classList.add('hidden');
+                articleBox.classList.remove('hidden');
+            } else {
+                fileBox.classList.remove('hidden');
+                articleBox.classList.add('hidden');
             }
         }
     </script>
