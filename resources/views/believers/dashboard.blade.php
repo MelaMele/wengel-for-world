@@ -463,7 +463,6 @@
         window.addEventListener('load', () => {
             setTimeout(connectToPastorLive, 1500);
         });
-    
     </script>
 </body>
 </html>
