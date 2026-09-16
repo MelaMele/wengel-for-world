@@ -306,13 +306,11 @@
                 console.log('Pastor broadcasting on room:', id);
             });
 
-            // ምዕመናን ሲገቡ ቪዲዮውን በቀጥታ ለእነሱ ማስተላለፍ (Answer incoming calls)
-            peer.on('call', (call) => {
-                if (localStream) {
-                    call.answer(localStream);
-                }
-            });
-        }
+            <script>
+        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
+        let peer = null;
+        let localStream = null;
+        let isStreaming = false;
 
         async function toggleCamera() {
             const video = document.getElementById('localVideo');
@@ -322,7 +320,12 @@
 
             if (!isStreaming) {
                 try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    // ካሜራና ማይክሮፎን መክፈት
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { width: 1280, height: 720 }, 
+                        audio: true 
+                    });
+
                     video.srcObject = localStream;
                     video.classList.remove('hidden');
                     placeholder.classList.add('hidden');
@@ -331,10 +334,21 @@
                     btnText.innerText = "ስርጭቱን አቁም (Stop Live)";
                     isStreaming = true;
 
-                    // PeerJS ን ማስነሳት
-                    initPeer();
+                    // PeerJS ክፍል መክፈት
+                    if (peer) peer.destroy();
+                    peer = new Peer(pastorRoomId);
+
+                    peer.on('open', (id) => {
+                        console.log('Pastor Room is LIVE on ID:', id);
+                    });
+
+                    // ማንኛውም ምዕመን ሲመጣ ቪዲዮውን በቀጥታ ማስተላለፍ
+                    peer.on('call', (call) => {
+                        call.answer(localStream);
+                    });
+
                 } catch (err) {
-                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ።");
+                    alert("ካሜራውን መክፈት አልተቻለም: እባክዎ ፈቃድ ይስጡ። " + err.message);
                 }
             } else {
                 if (localStream) {
@@ -349,67 +363,6 @@
                 badge.classList.remove('flex');
                 btnText.innerText = "ካሜራና ማይክሮፎን ክፈት (Start Live)";
                 isStreaming = false;
-            }
-        }
-
-        function togglePastorFullscreen() {
-            const videoBox = document.getElementById('pastorVideoBox');
-            const fsText = document.getElementById('pastorFsText');
-            const fsIcon = document.getElementById('pastorFsIcon');
-
-            if (!document.fullscreenElement) {
-                if (videoBox.requestFullscreen) {
-                    videoBox.requestFullscreen();
-                } else if (videoBox.webkitRequestFullscreen) {
-                    videoBox.webkitRequestFullscreen();
-                }
-                fsText.innerText = "አሳንስ";
-                fsIcon.className = "fas fa-compress text-amber-400";
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-                fsText.innerText = "ሙሉ ስክሪን";
-                fsIcon.className = "fas fa-expand text-amber-400";
-            }
-        }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-
-        let pastorPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            pastorPrompt = e;
-        });
-
-        function installPastorApp() {
-            if (pastorPrompt) {
-                pastorPrompt.prompt();
-                pastorPrompt.userChoice.then(() => { pastorPrompt = null; });
-            } else {
-                alert('በስልክዎ ብሮውዘር ሜኑ ውስጥ ገብተው "Add to Home screen" የሚለውን በመጫን እንደ አፕ መጫን ይችላሉ።');
-            }
-        }
-
-        function copyLink() {
-            navigator.clipboard.writeText("https://wengel-for-world.vercel.app/p/{{ $pastor->email }}").then(() => {
-                document.getElementById('copyBtnText').innerText = "ኮፒ ተደርጓል! ✓";
-                setTimeout(() => { document.getElementById('copyBtnText').innerText = "ሊንኩን ኮፒ አድርግ"; }, 3000);
-            });
-        }
-
-        function toggleUploadType() {
-            const type = document.getElementById('contentTypeSelect').value;
-            const fileBox = document.getElementById('fileUploadBox');
-            const articleBox = document.getElementById('articleBox');
-            if (type === 'article') {
-                fileBox.classList.add('hidden');
-                articleBox.classList.remove('hidden');
-            } else {
-                fileBox.classList.remove('hidden');
-                articleBox.classList.add('hidden');
             }
         }
     </script>
