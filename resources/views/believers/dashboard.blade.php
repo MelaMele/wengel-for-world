@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $believerName }} | የወንጌል ዳሽቦርድ</title>
-    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1E3A8A">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- PeerJS for Real-time Video Viewing -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -45,13 +46,11 @@
             </div>
 
             <div class="flex items-center space-x-2 sm:space-x-3">
-                <!-- 📲 PWA INSTALL APP BUTTON -->
                 <button id="installAppBtn" onclick="installApp()" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition items-center space-x-1.5 animate-bounce">
                     <i class="fas fa-download text-[10px]"></i>
                     <span>አፑን ጫን</span>
                 </button>
 
-                <!-- Giving Button -->
                 <button onclick="document.getElementById('givingModal').showModal()" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black rounded-xl shadow-md transition flex items-center space-x-1.5">
                     <i class="fas fa-hand-holding-heart"></i>
                     <span>ስጦታ ስጥ</span>
@@ -70,7 +69,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 GLOBAL LIVE VIDEO SCREEN WITH FULLSCREEN BUTTON -->
+        <!-- 🔴 REAL-TIME LIVE VIDEO SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -79,7 +78,6 @@
                 </div>
                 
                 <div class="flex items-center space-x-2">
-                    <!-- ⛶ FULLSCREEN BUTTON -->
                     <button onclick="toggleFullscreen()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5 transition" title="ስክሪኑን አሳድግ">
                         <i class="fas fa-expand text-amber-400" id="fsIcon"></i>
                         <span id="fsText">ሙሉ ስክሪን</span>
@@ -93,18 +91,24 @@
 
             <!-- Video Frame -->
             <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
-                <div class="text-center p-8">
+                
+                <!-- Remote Pastor Video Stream -->
+                <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+
+                <div id="waitingPlaceholder" class="text-center p-8">
                     <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
-                    <h4 class="text-base font-bold text-slate-200 mb-1">ዓለም አቀፍ የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ። በስርጭቱ ወቅት ሙሉ ስክሪን አድርገው መከታተል ይችላሉ።</p>
+                    <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto" id="connectStatus">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ፊት ለፊት ይታያሉ...</p>
+                    
+                    <button onclick="connectToPastorLive()" class="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition">
+                        <i class="fas fa-sync mr-1"></i> ስርጭቱን ፈልግና ተገናኝ
+                    </button>
                 </div>
 
-                <!-- Floating Reactions Overlay -->
                 <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-                <!-- Live Reactions Bar -->
                 <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
                     <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg" title="አሜን">🙏</button>
                     <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg" title="ተባረኩ">❤️</button>
@@ -351,9 +355,57 @@
         </div>
     </footer>
 
-    <!-- Scripts: Fullscreen, PWA Install, Audio Recording & Reactions -->
+    <!-- Scripts: Real-time Video Viewing via PeerJS -->
     <script>
-        // ⛶ FULLSCREEN TOGGLE
+        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
+        let peer = null;
+
+        function connectToPastorLive() {
+            const statusText = document.getElementById('connectStatus');
+            statusText.innerText = "ከፓስተሩ ስርጭት ጋር በመገናኘት ላይ...";
+
+            peer = new Peer(); // Random Believer Peer
+
+            peer.on('open', () => {
+                // ለፓስተሩ ክፍል መደወል
+                const call = peer.call(pastorRoomId, createEmptyMediaStream());
+
+                call.on('stream', (remoteStream) => {
+                    const video = document.getElementById('remoteVideo');
+                    const placeholder = document.getElementById('waitingPlaceholder');
+
+                    video.srcObject = remoteStream;
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                });
+
+                call.on('close', () => {
+                    alert('የቀጥታ ስርጭቱ ተጠናቋል።');
+                    location.reload();
+                });
+            });
+
+            peer.on('error', (err) => {
+                statusText.innerText = "ፓስተሩ ገና የቀጥታ ስርጭት አልጀመሩም። እባክዎ ጥቂት ቆይተው እንደገና ይሞክሩ።";
+            });
+        }
+
+        // Dummy stream for receiving video only
+        function createEmptyMediaStream() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const dst = oscillator.connect(audioContext.createMediaStreamDestination());
+            oscillator.start();
+            const track = dst.stream.getAudioTracks()[0];
+            track.enabled = false;
+            return dst.stream;
+        }
+
+        // በገጹ መክፈት ላይ በራሱ ጊዜ ለማገናኘት መሞከር
+        window.addEventListener('load', () => {
+            setTimeout(connectToPastorLive, 1000);
+        });
+
         function toggleFullscreen() {
             const videoBox = document.getElementById('videoBox');
             const fsText = document.getElementById('fsText');
@@ -376,7 +428,6 @@
             }
         }
 
-        // 📲 PWA INSTALL PROMPT
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
