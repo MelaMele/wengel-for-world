@@ -401,117 +401,69 @@
             return dst.stream;
         }
 
-        // በገጹ መክፈት ላይ በራሱ ጊዜ ለማገናኘት መሞከር
-        window.addEventListener('load', () => {
-            setTimeout(connectToPastorLive, 1000);
-        });
+        <!-- Real-time Video Fix for Viewers -->
+    <script>
+        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
+        let peer = null;
 
-        function toggleFullscreen() {
-            const videoBox = document.getElementById('videoBox');
-            const fsText = document.getElementById('fsText');
-            const fsIcon = document.getElementById('fsIcon');
+        function connectToPastorLive() {
+            const statusText = document.getElementById('connectStatus');
+            statusText.innerText = "ከፓስተሩ ጋር በመገናኘት ላይ...";
 
-            if (!document.fullscreenElement) {
-                if (videoBox.requestFullscreen) {
-                    videoBox.requestFullscreen();
-                } else if (videoBox.webkitRequestFullscreen) {
-                    videoBox.webkitRequestFullscreen();
-                }
-                fsText.innerText = "አሳንስ";
-                fsIcon.className = "fas fa-compress text-amber-400";
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-                fsText.innerText = "ሙሉ ስክሪን";
-                fsIcon.className = "fas fa-expand text-amber-400";
-            }
-        }
+            // አዲስ የ PeerJS ግንኙነት መክፈት
+            peer = new Peer();
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const btn = document.getElementById('installAppBtn');
-            btn.classList.remove('hidden');
-            btn.classList.add('flex');
-        });
+            peer.on('open', (id) => {
+                console.log('Believer connected with ID:', id);
+                
+                // ለፓስተሩ ክፍል መደወል
+                const call = peer.call(pastorRoomId, createEmptyAudioStream());
 
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choice) => {
-                    if (choice.outcome === 'accepted') {
-                        document.getElementById('installAppBtn').classList.add('hidden');
-                    }
-                    deferredPrompt = null;
+                call.on('stream', (remoteStream) => {
+                    const video = document.getElementById('remoteVideo');
+                    const placeholder = document.getElementById('waitingPlaceholder');
+
+                    video.srcObject = remoteStream;
+                    video.muted = false; // ድምፅ እንዲኖረው
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+
+                    video.play().catch(e => {
+                        // ብሮውዘሩ ድምፅ ካገደው በ muted ጀምሮ አዝራር ማሳየት
+                        video.muted = true;
+                        video.play();
+                    });
                 });
-            }
-        }
 
-        function copyToClipboard(elementId, btn) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check text-[10px]"></i> <span>ኮፒ ሆኗል!</span>';
-                btn.classList.add('bg-emerald-600');
-                setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-emerald-600'); }, 2500);
+                call.on('close', () => {
+                    document.getElementById('remoteVideo').classList.add('hidden');
+                    document.getElementById('waitingPlaceholder').classList.remove('hidden');
+                    statusText.innerText = "የቀጥታ ስርጭቱ ተጠናቋል።";
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.log('Peer error:', err);
+                statusText.innerText = "ፓስተሩ ገና ስርጭት አልጀመሩም። እባክዎ ጥቂት ቆይተው እንደገና ይሞክሩ።";
             });
         }
 
-        function sendReaction(emoji) {
-            const overlay = document.getElementById('reactionsOverlay');
-            const el = document.createElement('div');
-            el.className = 'absolute text-3xl animate-float select-none';
-            el.style.left = (Math.random() * 80 + 10) + '%';
-            el.style.bottom = '20px';
-            el.innerHTML = emoji;
-            overlay.appendChild(el);
-            setTimeout(() => { el.remove(); }, 1800);
+        // ባዶ የድምፅ ስትሪም መፍጠር (ብሮውዘሩ ማይክሮፎን እንዳይጠይቅ)
+        function createEmptyAudioStream() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const dst = osc.connect(ctx.createMediaStreamDestination());
+            osc.start();
+            const track = dst.stream.getAudioTracks()[0];
+            track.enabled = false;
+            return dst.stream;
         }
 
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecording = false;
-
-        async function toggleRecording() {
-            const btn = document.getElementById('recordBtn');
-            const icon = document.getElementById('micIcon');
-            const status = document.getElementById('recordStatus');
-            const form = document.getElementById('msgForm');
-
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
-                        reader.onloadend = () => {
-                            document.getElementById('voiceDataInput').value = reader.result;
-                            document.getElementById('textInput').removeAttribute('required');
-                            form.submit();
-                        };
-                    };
-                    mediaRecorder.start();
-                    isRecording = true;
-                    btn.classList.add('bg-rose-600', 'text-white');
-                    icon.className = 'fas fa-stop text-sm';
-                    status.classList.remove('hidden');
-                } catch (err) {
-                    alert('ማይክሮፎን መክፈት አልተቻለም');
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                btn.classList.remove('bg-rose-600', 'text-white');
-                icon.className = 'fas fa-microphone text-sm';
-                status.classList.add('hidden');
-            }
-        }
+        // ገጹ እንደተከፈተ ቪዲዮውን ለማገናኘት መሞከር
+        window.addEventListener('load', () => {
+            setTimeout(connectToPastorLive, 1500);
+        });
+    
     </script>
 </body>
 </html>
