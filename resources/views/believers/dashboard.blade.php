@@ -9,7 +9,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -63,7 +62,7 @@
 
     <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-1">
 
-        <!-- 🔴 LIVE VIDEO SCREEN -->
+        <!-- 🔴 LIVE VIDEO BROADCAST SCREEN -->
         <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 shadow-xl relative overflow-hidden" id="liveContainer">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-2">
@@ -76,28 +75,26 @@
                         <i class="fas fa-expand text-amber-400" id="fsIcon"></i>
                         <span id="fsText">ሙሉ ስክሪን</span>
                     </button>
+                    <span class="text-[11px] bg-rose-600/30 text-rose-300 border border-rose-500/40 px-3 py-1 rounded-full font-bold">
+                        🔴 LIVE
+                    </span>
                 </div>
             </div>
 
-            <!-- Video Box -->
-            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative flex items-center justify-center border border-slate-700 shadow-inner" id="videoBox">
-                <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+            <!-- Video Box (100% Reliable Embed Frame) -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden aspect-video relative border border-slate-700 shadow-inner" id="videoBox">
+                <iframe 
+                    id="liveIframe"
+                    src="https://meet.jit.si/wengel-live-pastor-{{ $pastor->id }}#config.startWithAudioMuted=false&config.startWithVideoMuted=false&interfaceConfig.TOOLBAR_BUTTONS=['microphone','camera','fullscreen']" 
+                    allow="camera; microphone; fullscreen; display-capture; autoplay"
+                    class="w-full h-full border-0">
+                </iframe>
 
-                <div id="waitingPlaceholder" class="text-center p-8">
-                    <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-amber-400 text-2xl mx-auto mb-3 animate-pulse">
-                        <i class="fas fa-satellite-dish"></i>
-                    </div>
-                    <h4 class="text-base font-bold text-slate-200 mb-1">የቀጥታ ስርጭት መድረክ</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto mb-4" id="connectStatus">ፓስተሩ የቀጥታ ስርጭት ሲጀምሩ እዚህ ስክሪን ላይ በቀጥታ ይታያሉ...</p>
-                    
-                    <button onclick="connectToPastorLive()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition shadow-lg">
-                        <i class="fas fa-play mr-1"></i> ስርጭቱን ተመልከት
-                    </button>
-                </div>
+                <!-- Floating Reactions Overlay -->
+                <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
 
-                <div id="reactionsOverlay" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
-
-                <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
+                <!-- Reactions Bar -->
+                <div class="absolute bottom-4 right-4 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-30">
                     <button onclick="sendReaction('🙏')" class="hover:scale-125 transition text-lg">🙏</button>
                     <button onclick="sendReaction('❤️')" class="hover:scale-125 transition text-lg">❤️</button>
                     <button onclick="sendReaction('🔥')" class="hover:scale-125 transition text-lg">🔥</button>
@@ -243,7 +240,7 @@
         </div>
     </main>
 
-    <!-- 🌟 DYNAMIC GIVING MODAL -->
+    <!-- 🌟 GIVING MODAL -->
     <dialog id="givingModal" class="rounded-3xl p-0 w-full max-w-md shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm">
         <div class="bg-gradient-to-r from-amber-600 via-secondary to-amber-700 text-white p-6 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -324,44 +321,6 @@
 
     <!-- Scripts -->
     <script>
-        const pastorRoomId = "wengel-live-pastor-{{ $pastor->id }}";
-        let peer = null;
-
-        function connectToPastorLive() {
-            const statusText = document.getElementById('connectStatus');
-            statusText.innerText = "ከፓስተሩ ጋር በመገናኘት ላይ...";
-
-            peer = new Peer();
-
-            peer.on('open', () => {
-                // ለፓስተሩ ክፍል መደወል
-                const call = peer.call(pastorRoomId, createEmptyMediaStream());
-
-                call.on('stream', (remoteStream) => {
-                    const video = document.getElementById('remoteVideo');
-                    const placeholder = document.getElementById('waitingPlaceholder');
-
-                    video.srcObject = remoteStream;
-                    video.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
-                });
-            });
-
-            peer.on('error', (err) => {
-                statusText.innerText = "ፓስተሩ ገና ስርጭት አልጀመሩም። እባክዎ ጥቂት ቆይተው እንደገና ይሞክሩ።";
-            });
-        }
-
-        function createEmptyMediaStream() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const dst = osc.connect(ctx.createMediaStreamDestination());
-            osc.start();
-            const track = dst.stream.getAudioTracks()[0];
-            track.enabled = false;
-            return dst.stream;
-        }
-
         function toggleFullscreen() {
             const videoBox = document.getElementById('videoBox');
             const fsText = document.getElementById('fsText');
@@ -395,7 +354,7 @@
         function sendReaction(emoji) {
             const overlay = document.getElementById('reactionsOverlay');
             const el = document.createElement('div');
-            el.className = 'absolute text-3xl animate-float select-none';
+            el.className = 'absolute text-3xl animate-float select-none z-30';
             el.style.left = (Math.random() * 80 + 10) + '%';
             el.style.bottom = '20px';
             el.innerHTML = emoji;
